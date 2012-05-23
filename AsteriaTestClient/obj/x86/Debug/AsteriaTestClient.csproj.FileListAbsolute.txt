@@ -1,2 +1,0 @@
-C:\Users\Katie\Desktop\Asteria\AsteriaTestClient\obj\x86\Debug\AsteriaClient.exe
-C:\Users\Katie\Desktop\Asteria\AsteriaTestClient\obj\x86\Debug\AsteriaClient.pdb
