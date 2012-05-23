@@ -35,11 +35,11 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Lidgren.Network">
-      <HintPath>..\References\Lidgren\Lidgren.Network\bin\Release\Lidgren.Network.dll</HintPath>
+      <HintPath>..\References\Lidgren.Network.dll</HintPath>
     </Reference>
     <Reference Include="mysql.data, Version=6.3.7.0, Culture=neutral, PublicKeyToken=c5687fc88969c44d, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\References\mysql-connector-net-6.4.3-noinstall\v4\mysql.data.dll</HintPath>
+      <HintPath>..\References\mysql.data.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
