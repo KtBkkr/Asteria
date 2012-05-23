@@ -5,8 +5,6 @@ C:\Users\Katie\Desktop\Asteria\AsteriaWorldServer\bin\Debug\AsteriaLibrary.dll
 C:\Users\Katie\Desktop\Asteria\AsteriaWorldServer\bin\Debug\Lidgren.Network.dll
 C:\Users\Katie\Desktop\Asteria\AsteriaWorldServer\bin\Debug\mysql.data.dll
 C:\Users\Katie\Desktop\Asteria\AsteriaWorldServer\bin\Debug\AsteriaLibrary.pdb
-C:\Users\Katie\Desktop\Asteria\AsteriaWorldServer\bin\Debug\Lidgren.Network.pdb
-C:\Users\Katie\Desktop\Asteria\AsteriaWorldServer\bin\Debug\Lidgren.Network.xml
 C:\Users\Katie\Desktop\Asteria\AsteriaWorldServer\obj\x86\Debug\AsteriaWorldServer.exe
 C:\Users\Katie\Desktop\Asteria\AsteriaWorldServer\obj\x86\Debug\AsteriaWorldServer.pdb
 C:\Users\Katie\Desktop\Asteria\AsteriaWorldServer\bin\Debug\Data\Entities.xml
