@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<XnaContent>
+
+  <!-- TypeId 1-500 are character classes  -->
+  <!-- TypeId 501-1000 are NPC's           -->
+  <!-- TypeId 1001-3000 are pickable items -->
+  <!-- TypeId 3001-5000 are mobs           -->
+  <!-- TypeId 5001-9999 are static objects -->
+
+  <Entity>
+    <TypeId>1</TypeId>
+    <ClassName>Mage</ClassName>
+    <Race>Human</Race>
+    <Sex>Female</Sex>
+    <Description>Fist full o boomstick!</Description>
+    <Inventory>8,4</Inventory>
+
+    <Attributes>
+      <Health>250</Health>
+      <Mana>900</Mana>
+      <Strength>10</Strength>
+      <Dexterity>25</Dexterity>
+      <Intelligence>80</Intelligence>
+      <Charisma>40</Charisma>
+    </Attributes>
+  </Entity>
+
+  <!-- Pickable Items -->
+  <Entity>
+    <!-- Gold is a special case since it does not take any space in the inventory and must be handled separately by the world server and client -->
+    <TypeId>1001</TypeId>
+    <ClassName>Gold</ClassName>
+    <Description>Gold</Description>
+    <InventorySlots>0</InventorySlots>
+  </Entity>
+</XnaContent>

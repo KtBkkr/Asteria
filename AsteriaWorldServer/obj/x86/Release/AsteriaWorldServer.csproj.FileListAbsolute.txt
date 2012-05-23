@@ -1,0 +1,13 @@
+C:\Users\Katie\Desktop\Asteria\AsteriaWorldServer\bin\Release\AsteriaWorldServer.exe
+C:\Users\Katie\Desktop\Asteria\AsteriaWorldServer\bin\Release\AsteriaWorldServer.pdb
+C:\Users\Katie\Desktop\Asteria\AsteriaWorldServer\bin\Release\AsteriaLibrary.dll
+C:\Users\Katie\Desktop\Asteria\AsteriaWorldServer\bin\Release\Lidgren.Network.dll
+C:\Users\Katie\Desktop\Asteria\AsteriaWorldServer\bin\Release\MySql.Data.dll
+C:\Users\Katie\Desktop\Asteria\AsteriaWorldServer\bin\Release\AsteriaLibrary.pdb
+C:\Users\Katie\Desktop\Asteria\AsteriaWorldServer\bin\Release\Lidgren.Network.pdb
+C:\Users\Katie\Desktop\Asteria\AsteriaWorldServer\bin\Release\Lidgren.Network.xml
+C:\Users\Katie\Desktop\Asteria\AsteriaWorldServer\obj\x86\Release\ResolveAssemblyReference.cache
+C:\Users\Katie\Desktop\Asteria\AsteriaWorldServer\obj\x86\Release\AsteriaWorldServer.exe
+C:\Users\Katie\Desktop\Asteria\AsteriaWorldServer\obj\x86\Release\AsteriaWorldServer.pdb
+C:\Users\Katie\Desktop\Asteria\AsteriaWorldServer\bin\Release\AsteriaServerFramework.dll
+C:\Users\Katie\Desktop\Asteria\AsteriaWorldServer\bin\Release\AsteriaServerFramework.pdb

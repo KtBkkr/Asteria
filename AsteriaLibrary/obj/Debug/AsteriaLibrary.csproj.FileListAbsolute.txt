@@ -1,0 +1,9 @@
+C:\Users\Katie\Desktop\Asteria\AsteriaLibrary\bin\Debug\AsteriaLibrary.dll
+C:\Users\Katie\Desktop\Asteria\AsteriaLibrary\bin\Debug\AsteriaLibrary.pdb
+C:\Users\Katie\Desktop\Asteria\AsteriaLibrary\bin\Debug\Lidgren.Network.dll
+C:\Users\Katie\Desktop\Asteria\AsteriaLibrary\bin\Debug\Lidgren.Network.pdb
+C:\Users\Katie\Desktop\Asteria\AsteriaLibrary\bin\Debug\Lidgren.Network.xml
+C:\Users\Katie\Desktop\Asteria\AsteriaLibrary\obj\Debug\ResolveAssemblyReference.cache
+C:\Users\Katie\Desktop\Asteria\AsteriaLibrary\obj\Debug\AsteriaLibrary.dll
+C:\Users\Katie\Desktop\Asteria\AsteriaLibrary\obj\Debug\AsteriaLibrary.pdb
+C:\Users\Katie\Desktop\Asteria\AsteriaLibrary\bin\Debug\mysql.data.dll

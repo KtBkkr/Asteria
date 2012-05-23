@@ -1,0 +1,11 @@
+C:\Users\Katie\Desktop\Asteria\AsteriaLoginServer\bin\Debug\AsteriaLoginServer.exe
+C:\Users\Katie\Desktop\Asteria\AsteriaLoginServer\bin\Debug\AsteriaLoginServer.pdb
+C:\Users\Katie\Desktop\Asteria\AsteriaLoginServer\bin\Debug\AsteriaLibrary.dll
+C:\Users\Katie\Desktop\Asteria\AsteriaLoginServer\bin\Debug\Lidgren.Network.dll
+C:\Users\Katie\Desktop\Asteria\AsteriaLoginServer\bin\Debug\AsteriaLibrary.pdb
+C:\Users\Katie\Desktop\Asteria\AsteriaLoginServer\bin\Debug\Lidgren.Network.pdb
+C:\Users\Katie\Desktop\Asteria\AsteriaLoginServer\bin\Debug\Lidgren.Network.xml
+C:\Users\Katie\Desktop\Asteria\AsteriaLoginServer\obj\x86\Debug\ResolveAssemblyReference.cache
+C:\Users\Katie\Desktop\Asteria\AsteriaLoginServer\obj\x86\Debug\AsteriaLoginServer.exe
+C:\Users\Katie\Desktop\Asteria\AsteriaLoginServer\obj\x86\Debug\AsteriaLoginServer.pdb
+C:\Users\Katie\Desktop\Asteria\AsteriaLoginServer\bin\Debug\mysql.data.dll

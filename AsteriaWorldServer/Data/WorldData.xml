@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<AsteriaWorld>
+  <!-- World Parameters -->
+  <Params>
+    <!-- Maximum distance in tiles the player is allowed to pick up items. -->
+    <PickupDistance>2</PickupDistance>
+    
+    <!-- Spawn point for new characters -->
+    <!-- TODO: Possibly make this more dynamic.. -->
+    <PlayerStartPoint>0,0</PlayerStartPoint>
+
+    <!-- TODO: for proper zoning we will have to load the zones from a separate file. -->
+    <!-- The zones can have different sizes and differenthandling like town or crowdy areas. -->
+    
+    <!-- Number of zones in N-S and E-W world directions. -->
+    <WorldZones>5</WorldZones>
+    
+    <!-- Size of a zone in number of tiles -->
+    <WorldZoneSize>100</WorldZoneSize>
+  </Params>
+  
+  <!-- Random items on ground just for testing things -->
+  <PickableItems>
+    <Item id="1001">
+      <Amount>100</Amount>
+      <Location>10,20</Location>
+    </Item>
+  </PickableItems>
+</AsteriaWorld>
