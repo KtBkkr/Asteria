@@ -6,6 +6,20 @@ using System.Text;
 namespace AsteriaClient.Interface.Controls
 {
     #region Enums
+    public enum Message
+    {
+        Click,
+        MouseDown,
+        MouseUp,
+        MousePress,
+        MouseMove,
+        MouseOver,
+        MouseOut,
+        KeyDown,
+        KeyUp,
+        KeyPress
+    }
+
     public enum ControlState
     {
         Enabled,

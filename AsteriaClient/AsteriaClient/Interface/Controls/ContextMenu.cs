@@ -24,7 +24,34 @@ namespace AsteriaClient.Interface.Controls
         public ContextMenu(Manager manager)
             : base(manager)
         {
-            
+            Visible = false;
+            Detached = true;
+            StayOnBack = true;
+
+            Manager.Input.MouseDown += new MouseEventHandler(Input_MouseDown);
+        }
+        #endregion
+
+        #region Destructors
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+                Manager.Input.MouseDown -= Input_MouseDown;
+
+            base.Dispose(disposing);
+        }
+        #endregion
+
+        #region Methods
+        public override void Init()
+        {
+            base.Init();
+        }
+
+        protected internal override void InitSkin()
+        {
+            base.InitSkin();
+            Skin = new SkinControl(Manager.Skin.Controls["ContextMenu"]);
         }
         #endregion
     }

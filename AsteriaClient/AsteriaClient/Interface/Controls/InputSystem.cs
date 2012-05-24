@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Microsoft.Xna.Framework.Input;
 
 namespace AsteriaClient.Interface.Controls
 {
@@ -12,8 +13,7 @@ namespace AsteriaClient.Interface.Controls
         None = 0x00,
         Keyboard = 0x01,
         Mouse = 0x02,
-        GamePad = 0x04,
-        All = Keyboard | Mouse | GamePad
+        All = Keyboard | Mouse
     }
 
     public enum MouseButton
@@ -24,6 +24,54 @@ namespace AsteriaClient.Interface.Controls
         Middle,
         XButton1,
         XButton2
+    }
+    #endregion
+
+    #region Structs
+    public struct InputOffset
+    {
+        public int X;
+        public int Y;
+        public float RatioX;
+        public float RatioY;
+
+        public InputOffset(int x, int y, float rx, float ry)
+        {
+            X = x;
+            Y = y;
+            RatioX = rx;
+            RatioY = ry;
+        }
+    }
+    #endregion
+
+    #region Classes
+    public class InputSystem : Disposable
+    {
+        #region Classes
+        private class InputKey
+        {
+            public Keys Key = Keys.None;
+            public bool Pressed = false;
+            public double Countdown = RepeatDelay;
+        }
+
+        private class InputMouseButton
+        {
+            public MouseButton Button = MouseButton.None;
+            public bool Pressed = false;
+            public double Countdown = RepeatDelay;
+
+            public InputMouseButton()
+            {
+            }
+
+            public InputMouseButton(MouseButton button)
+            {
+                Button = button;
+            }
+        }
+        #endregion
     }
     #endregion
 }

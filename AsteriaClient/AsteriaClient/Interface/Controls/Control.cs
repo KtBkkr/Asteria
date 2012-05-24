@@ -55,10 +55,10 @@ namespace AsteriaClient.Interface.Controls
         private Rectangle drawingRect = Rectangle.Empty;
 
         private ControlList controls = new ControlList();
-        private Rectangle moveableArea = Rectangle.Empty;
+        private Rectangle movableArea = Rectangle.Empty;
         private bool passive = false;
         private bool detached = false;
-        private bool moveable = false;
+        private bool movable = false;
         private bool resizable = false;
         private bool invalidated = true;
         private bool canFocus = true;
@@ -103,7 +103,7 @@ namespace AsteriaClient.Interface.Controls
         /// <summary>
         /// Gets or sets a rectangular area that reacts on moving the control with the mouse.
         /// </summary>
-        public virtual Rectangle MoveableArea { get { return moveableArea; } set { moveableArea = value; } }
+        public virtual Rectangle MoveableArea { get { return movableArea; } set { movableArea = value; } }
 
         /// <summary>
         /// Gets a vlue indicating whether this control is a child control.
@@ -138,7 +138,7 @@ namespace AsteriaClient.Interface.Controls
         /// <summary>
         /// Gets or sets the value indicating whether this control can be moved by the mouse.
         /// </summary>
-        public virtual bool Moveable { get { return moveable; } set { moveable = value; } }
+        public virtual bool Moveable { get { return movable; } set { movable = value; } }
 
         /// <summary>
         /// Gets or sets the value indicating whether this control can be resized by the mouse.
@@ -877,7 +877,7 @@ namespace AsteriaClient.Interface.Controls
         }
         #endregion
 
-        #region Deconstructors
+        #region Destructors
         protected override void Dispose(bool disposing)
         {
             if (disposing)
@@ -934,7 +934,6 @@ namespace AsteriaClient.Interface.Controls
             if (this.Parent is Container && (this.Parent as Container).AutoScroll)
             {
                 int maxy = 0;
-
                 foreach (Control c in Controls)
                 {
                     if ((c.Anchor & Anchors.Bottom) != Anchors.Bottom && c.Visible)
@@ -945,11 +944,1013 @@ namespace AsteriaClient.Interface.Controls
                 }
 
                 if (maxy < Height) maxy = Height;
-
                 return maxy;
             }
             else
                 return Height;
+        }
+
+        private int GetVirtualWidth()
+        {
+            if (this.Parent is Container && (this.Parent as Container).AutoScroll)
+            {
+                int maxx = 0;
+                foreach (Control c in Controls)
+                {
+                    if ((c.Anchor & Anchors.Right) != Anchors.Right && c.Visible)
+                    {
+                        if (c.Left + c.Width > maxx) maxx = c.Left + c.Width;
+                    }
+                }
+                if (maxx < Width) maxx = Width;
+                return maxx;
+            }
+            else
+                return Width;
+        }
+
+        private Rectangle GetClippingRect(Control c)
+        {
+            Rectangle r = new Rectangle(c.OriginLeft - root.AbsoluteLeft, c.OriginTop - root.AbsoluteTop, c.OriginWidth, c.OriginHeight);
+            int x1 = r.Left;
+            int x2 = r.Right;
+            int y1 = r.Top;
+            int y2 = r.Bottom;
+
+            Control ctrl = c.Parent;
+            while (ctrl != null)
+            {
+                int cx1 = ctrl.OriginLeft - root.AbsoluteLeft;
+                int cy1 = ctrl.OriginTop - root.AbsoluteTop;
+                int cx2 = cx1 + ctrl.OriginWidth;
+                int cy2 = cy1 + ctrl.OriginHeight;
+
+                if (x1 < cx1) x1 = cx1;
+                if (y1 < cy1) y1 = cy1;
+                if (x2 > cx2) x2 = cx2;
+                if (y2 > cy2) y2 = cy2;
+
+                ctrl = ctrl.Parent;
+            }
+
+            int fx2 = x2 - x1;
+            int fy2 = y2 - y1;
+
+            if (x1 < 0) x1 = 0;
+            if (y1 < 0) y1 = 0;
+            if (fx2 < 0) fx2 = 0;
+            if (fy2 < 0) fy2 = 0;
+            if (x1 > root.Width) { x1 = root.Width; }
+            if (y1 > root.Height) { y1 = root.Height; }
+            if (fx2 > root.Width) fx2 = root.Width;
+            if (fy2 > root.Height) fy2 = root.Height;
+
+            Rectangle ret = new Rectangle(x1, y1, fx2, fy2);
+            return ret;
+        }
+
+        private RenderTarget2D CreateRenderTarget(int width, int height)
+        {
+            if (width > 0 && height > 0)
+                return new RenderTarget2D(Manager.GraphicsDevice, width, height, false, SurfaceFormat.Color, DepthFormat.None,
+                    Manager.GraphicsDevice.PresentationParameters.MultiSampleCount, Manager._RenderTargetUsage);
+
+            return null;
+        }
+
+        internal virtual void PrepareTexture(Renderer renderer, GameTime gameTime)
+        {
+            if (visible)
+            {
+                if (invalidated)
+                {
+                    OnDrawTexture(new DrawEventArgs(renderer, new Rectangle(0, 0, OriginWidth, OriginHeight), gameTime));
+
+                    if (target == null || target.Width < OriginWidth || target.Height < OriginHeight)
+                    {
+                        if (target != null)
+                        {
+                            target.Dispose();
+                            target = null;
+                        }
+
+                        int w = OriginWidth + (Manager.TextureResizeIncrement - (OriginWidth % Manager.TextureResizeIncrement));
+                        int h = OriginHeight + (Manager.TextureResizeIncrement - (OriginHeight % Manager.TextureResizeIncrement));
+
+                        if (h > Manager.TargetHeight) h = Manager.TargetHeight;
+                        if (w > Manager.TargetWidth) w = Manager.TargetWidth;
+
+                        target = CreateRenderTarget(w, h);
+                    }
+
+                    if (target != null)
+                    {
+                        Manager.GraphicsDevice.SetRenderTarget(target);
+                        target.GraphicsDevice.Clear(backColor);
+
+                        Rectangle rect = new Rectangle(0, 0, OriginWidth, OriginHeight);
+                        DrawControls(renderer, rect, gameTime, false);
+
+                        Manager.GraphicsDevice.SetRenderTarget(null);
+                    }
+                    invalidated = false;
+                }
+            }
+        }
+
+        private bool CheckDetached(Control c)
+        {
+            Control parent = c.Parent;
+            while (parent != null)
+            {
+                if (parent.Detached)
+                    return true;
+
+                parent = parent.Parent;
+            }
+            return c.Detached;
+        }
+
+        private void DrawChildControls(Renderer renderer, GameTime gameTime, bool firstDetachedLevel)
+        {
+            if (controls != null)
+            {
+                foreach (Control c in controls)
+                {
+                    // We skip detached controls for first level after root (they are rendered separately in Draw() method)
+                    if (((c.Root == c.Parent && !c.Detached) || c.Root != c.Parent) && AbsoluteRect.Intersects(c.AbsoluteRect) && c.visible)
+                    {
+                        Manager.GraphicsDevice.ScissorRectangle = GetClippingRect(c);
+
+                        Rectangle rect = new Rectangle(c.OriginLeft - root.AbsoluteLeft, c.OriginTop - root.AbsoluteTop, c.OriginWidth, c.OriginHeight);
+                        if (c.Root != c.Parent && ((!c.Detached && CheckDetached(c)) || firstDetachedLevel))
+                        {
+                            rect = new Rectangle(c.OriginLeft, c.OriginTop, c.OriginWidth, c.OriginHeight);
+                            Manager.GraphicsDevice.ScissorRectangle = rect;
+                        }
+
+                        renderer.Begin(BlendingMode.Default);
+                        c.DrawingRect = rect;
+                        c.DrawControl(renderer, rect, gameTime);
+
+                        DrawEventArgs args = new DrawEventArgs();
+                        args.Rectangle = rect;
+                        args.Renderer = renderer;
+                        args.GameTime = gameTime;
+                        c.OnDraw(args);
+                        renderer.End();
+
+                        c.DrawChildControls(renderer, gameTime, firstDetachedLevel);
+
+                        c.DrawOutline(renderer, true);
+                    }
+                }
+            }
+        }
+
+        private void DrawDetached(Control control, Renderer renderer, GameTime gameTime)
+        {
+            if (control.Controls != null)
+            {
+                foreach (Control c in control.Controls)
+                {
+                    if (c.Detached && c.Visible)
+                        c.DrawControls(renderer, new Rectangle(c.OriginLeft, c.OriginTop, c.OriginWidth, c.OriginHeight), gameTime, true);
+                }
+            }
+        }
+
+        internal virtual void Render(Renderer renderer, GameTime gameTime)
+        {
+            if (visible && target != null)
+            {
+                renderer.Begin(BlendingMode.Default);
+                renderer.Draw(target, OriginLeft, OriginTop, new Rectangle(0, 0, OriginWidth, OriginHeight), Color.FromNonPremultiplied(255, 255, 255, Alpha));
+                renderer.End();
+
+                DrawDetached(this, renderer, gameTime);
+
+                DrawOutline(renderer, false);
+            }
+        }
+
+        private void DrawOutline(Renderer renderer, bool child)
+        {
+            if (!OutlineRect.IsEmpty)
+            {
+                Rectangle r = OutlineRect;
+                if (child)
+                    r = new Rectangle(OutlineRect.Left + (parent.AbsoluteLeft - root.AbsoluteLeft), OutlineRect.Top + (parent.AbsoluteTop - root.AbsoluteTop), OutlineRect.Width, OutlineRect.Height);
+
+                Texture2D t = Manager.Skin.Controls["Control.Outline"].Layers[0].Image.Resource;
+
+                int s = resizerSize;
+                Rectangle r1 = new Rectangle(r.Left + leftModifier, r.Top + topModifier, r.Width, s);
+                Rectangle r2 = new Rectangle(r.Left + leftModifier, r.Top + s + topModifier, resizerSize, r.Height - (2 * s));
+                Rectangle r3 = new Rectangle(r.Right - s + leftModifier, r.Top + s + topModifier, s, r.Height - (2 * s));
+                Rectangle r4 = new Rectangle(r.Left + leftModifier, r.Bottom - s + topModifier, r.Width, s);
+
+                Color c = Manager.Skin.Controls["Control.Outline"].Layers[0].States.Enabled.Color;
+
+                renderer.Begin(BlendingMode.Default);
+                if ((ResizeEdge & Anchors.Top) == Anchors.Top || !partialOutline) renderer.Draw(t, r1, c);
+                if ((ResizeEdge & Anchors.Left) == Anchors.Left || !partialOutline) renderer.Draw(t, r2, c);
+                if ((ResizeEdge & Anchors.Right) == Anchors.Right || !partialOutline) renderer.Draw(t, r3, c);
+                if ((ResizeEdge & Anchors.Bottom) == Anchors.Bottom || !partialOutline) renderer.Draw(t, r4, c);
+                renderer.End();
+            }
+            else if (DesignMode && Focused)
+            {
+                Rectangle r = ControlRect;
+                if (child)
+                    r = new Rectangle(r.Left + (parent.AbsoluteLeft - root.AbsoluteLeft), r.Top + (parent.AbsoluteTop - root.AbsoluteTop), r.Width, r.Height);
+
+                Texture2D t = Manager.Skin.Controls["Control.Outline"].Layers[0].Image.Resource;
+
+                int s = resizerSize;
+                Rectangle r1 = new Rectangle(r.Left + leftModifier, r.Top + topModifier, r.Width, s);
+                Rectangle r2 = new Rectangle(r.Left + leftModifier, r.Top + s + topModifier, resizerSize, r.Height - (2 * s));
+                Rectangle r3 = new Rectangle(r.Right - s + leftModifier, r.Top + s + topModifier, s, r.Height - (2 * s));
+                Rectangle r4 = new Rectangle(r.Left + leftModifier, r.Bottom - s + topModifier, r.Width, s);
+
+                Color c = Manager.Skin.Controls["Control.Outline"].Layers[0].States.Enabled.Color;
+
+                renderer.Begin(BlendingMode.Default);
+                renderer.Draw(t, r1, c);
+                renderer.Draw(t, r2, c);
+                renderer.Draw(t, r3, c);
+                renderer.Draw(t, r4, c);
+                renderer.End();
+            }
+        }
+
+        /// <summary>
+        /// Sets the top and left position of the control.
+        /// </summary>
+        public virtual void SetPosition(int left, int top)
+        {
+            this.left = left;
+            this.top = top;
+        }
+
+        /// <summary>
+        /// Sets the width and height of the control.
+        /// </summary>
+        public virtual void SetSize(int width, int height)
+        {
+            this.width = width;
+            this.height = height;
+        }
+
+        internal void SetAnchorMargins()
+        {
+            if (Parent != null)
+            {
+                anchorMargins.Left = Left;
+                anchorMargins.Top = Top;
+                anchorMargins.Right = Parent.VirtualWidth - Width - Left;
+                anchorMargins.Bottom = Parent.VirtualHeight - Height - Top;
+            }
+            else
+                anchorMargins = new Margins();
+        }
+
+        private void ProcessAnchor(ResizeEventArgs e)
+        {
+            if (((Anchor & Anchors.Right) == Anchors.Right) && ((Anchor & Anchors.Left) != Anchors.Left))
+                Left = Parent.VirtualWidth - Width - anchorMargins.Right;
+            else if (((Anchor & Anchors.Right) == Anchors.Right) && ((Anchor & Anchors.Left) == Anchors.Left))
+                Width = Parent.VirtualWidth - Left - anchorMargins.Right;
+            else if (((Anchor & Anchors.Right) != Anchors.Right) && ((Anchor & Anchors.Left) != Anchors.Left))
+            {
+                int diff = (e.Width - e.OldWidth);
+                if (e.Width % 2 != 0 && diff != 0)
+                    diff += (diff / Math.Abs(diff));
+
+                Left += (diff / 2);
+            }
+            if (((Anchor & Anchors.Bottom) == Anchors.Bottom) && ((Anchor & Anchors.Top) != Anchors.Top))
+                Top = Parent.VirtualHeight - Height - anchorMargins.Bottom;
+            else if (((Anchor & Anchors.Bottom) == Anchors.Bottom) && ((Anchor & Anchors.Top) == Anchors.Top))
+                Height = Parent.VirtualHeight - Top - anchorMargins.Bottom;
+            else if (((Anchor & Anchors.Bottom) != Anchors.Bottom) && ((Anchor & Anchors.Top) != Anchors.Top))
+            {
+                int diff = (e.Height - e.OldHeight);
+                if (e.Height % 2 != 0 && diff != 0)
+                    diff += (diff / Math.Abs(diff));
+
+                Top += (diff / 2);
+            }
+        }
+        #endregion
+
+        #region Public
+        public virtual Control GetControl(string name)
+        {
+            Control ret = null;
+            foreach (Control c in Controls)
+            {
+                if (c.Name.ToLower() == name.ToLower())
+                {
+                    ret = c;
+                    break;
+                }
+                else
+                {
+                    ret = c.GetControl(name);
+                    if (ret != null) break;
+                }
+            }
+            return ret;
+        }
+
+        /// <summary>
+        /// Adds the specified control as a child.
+        /// </summary>
+        public virtual void Add(Control control)
+        {
+            if (control != null)
+            {
+                if (!controls.Contains(control))
+                {
+                    if (control.Parent != null) control.Parent.Remove(control);
+                    else Manager.Remove(control);
+
+                    control.Manager = Manager;
+                    control.parent = this;
+                    control.Root = root;
+                    control.Enabled = (Enabled ? control.Enabled : Enabled);
+                    controls.Add(control);
+
+                    virtualHeight = GetVirtualHeight();
+                    virtualWidth = GetVirtualWidth();
+
+                    Manager.DeviceSettingsChanged += new DeviceEventHandler(control.OnDeviceSettingsChanged);
+                    Manager.SkinChanging += new SkinEventHandler(control.OnSkinChanging);
+                    Manager.SkinChanged += new SkinEventHandler(control.OnSkinChanged);
+                    Resize += new ResizeEventHandler(control.OnParentResize);
+
+                    control.SetAnchorMargins();
+
+                    if (!Suspended) OnParentChanged(new EventArgs());
+                }
+            }
+        }
+
+        /// <summary>
+        /// Removed the specified control.
+        /// </summary>
+        public virtual void Remove(Control control)
+        {
+            if (control != null)
+            {
+                if (control.Focused && control.Root != null) control.Root.Focused = true;
+                else if (control.Focused) control.Focused = false;
+
+                controls.Remove(control);
+
+                control.parent = null;
+                control.Root = control;
+
+                Resize -= control.OnParentResize;
+                Manager.DeviceSettingsChanged -= control.OnDeviceSettingsChanged;
+                Manager.SkinChanging -= control.OnSkinChanging;
+                Manager.SkinChanged -= control.OnSkinChanged;
+
+                if (!Suspended) OnParentChanged(new EventArgs());
+            }
+        }
+
+        public virtual bool Contains(Control control, bool recursively)
+        {
+            if (Controls != null)
+            {
+                foreach (Control c in Controls)
+                {
+                    if (c == control) return true;
+                    if (recursively && c.Contains(control, true)) return true;
+                }
+            }
+            return false;
+        }
+
+        public virtual void Invalidate()
+        {
+            invalidated = true;
+
+            if (parent != null)
+                parent.Invalidate();
+        }
+
+        public virtual void BringToFront()
+        {
+            if (Manager != null) Manager.BringToFront(this);
+        }
+
+        public virtual void SendToBack()
+        {
+            if (Manager != null) Manager.SendToBack(this);
+        }
+
+        public virtual void Show()
+        {
+            Visible = true;
+        }
+
+        public virtual void Hide()
+        {
+            Visible = false;
+        }
+
+        public virtual void Refresh()
+        {
+            OnMove(new MoveEventArgs(left, top, left, top));
+            OnResize(new ResizeEventArgs(width, height, width, height));
+        }
+
+        public virtual void SendMessage(Message message, EventArgs e)
+        {
+            MessageProcess(message, e);
+        }
+
+        protected virtual void MessageProcess(Message message, EventArgs e)
+        {
+            switch (message)
+            {
+                case Message.Click:
+                    {
+                        ClickProcess(e as MouseEventArgs);
+                        break;
+                    }
+                case Message.MouseDown:
+                    {
+                        MouseDownProcess(e as MouseEventArgs);
+                        break;
+                    }
+                case Message.MouseUp:
+                    {
+                        MouseUpProcess(e as MouseEventArgs);
+                        break;
+                    }
+                case Message.MousePress:
+                    {
+                        MousePressProcess(e as MouseEventArgs);
+                        break;
+                    }
+                case Message.MouseMove:
+                    {
+                        MouseMoveProcess(e as MouseEventArgs);
+                        break;
+                    }
+                case Message.MouseOver:
+                    {
+                        MouseOverProcess(e as MouseEventArgs);
+                        break;
+                    }
+                case Message.MouseOut:
+                    {
+                        MouseOutProcess(e as MouseEventArgs);
+                        break;
+                    }
+                case Message.GamePadDown:
+                    {
+                        GamePadDownProcess(e as GamePadEventArgs);
+                        break;
+                    }
+                case Message.GamePadUp:
+                    {
+                        GamePadUpProcess(e as GamePadEventArgs);
+                        break;
+                    }
+                case Message.GamePadPress:
+                    {
+                        GamePadPressProcess(e as GamePadEventArgs);
+                        break;
+                    }
+                case Message.KeyDown:
+                    {
+                        KeyDownProcess(e as KeyEventArgs);
+                        break;
+                    }
+                case Message.KeyUp:
+                    {
+                        KeyUpProcess(e as KeyEventArgs);
+                        break;
+                    }
+                case Message.KeyPress:
+                    {
+                        KeyPressProcess(e as KeyEventArgs);
+                        break;
+                    }
+            }
+        }
+        #endregion
+
+        #region Keyboard
+        private void KeyPressProcess(KeyEventArgs e)
+        {
+            Invalidate();
+            if (!Suspended) OnKeyPress(e);
+        }
+
+        private void KeyDownProcess(KeyEventArgs e)
+        {
+            Invalidate();
+            ToolTipOut();
+
+            if (e.Key == Microsoft.Xna.Framework.Input.Keys.Space && !IsPressed)
+                pressed[(int)MouseButton.None] = true;
+
+            if (!Suspended) OnKeyDown(e);
+        }
+
+        private void KeyUpProcess(KeyEventArgs e)
+        {
+            Invalidate();
+
+            if (e.Key == Microsoft.Xna.Framework.Input.Keys.Space && pressed[(int)MouseButton.None])
+                pressed[(int)MouseButton.None] = false;
+
+            if (!Suspended) OnKeyUp(e);
+
+            if (e.Key == Microsoft.Xna.Framework.Input.Keys.Apps && !e.Handled)
+            {
+                if (contextMenu != null)
+                    contextMenu.Show(this, AbsoluteLeft + 8, AbsoluteTop + 8);
+            }
+        }
+        #endregion
+
+        #region Mouse
+        private void MouseDownProcess(MouseEventArgs e)
+        {
+            Invalidate();
+            pressed[(int)e.Button] = true;
+
+            if (e.Button == MouseButton.Left)
+            {
+                pressSpot = new Point(TransformPosition(e).Position.X, TransformPosition(e).Position.Y);
+
+                if (CheckResizableArea(e.Position))
+                {
+                    pressDiff[0] = pressSpot.X;
+                    pressDiff[1] = pressSpot.Y;
+                    pressDiff[2] = Width - pressSpot.X;
+                    pressDiff[3] = Height - pressSpot.Y;
+
+                    IsResizing = true;
+                    if (outlineResizing) OutlineRect = ControlRect;
+                    if (!Suspended) OnResizeBegin(e);
+                }
+                else if (CheckMovableArea(e.Position))
+                {
+                    IsMoving = true;
+                    if (outlineMoving) OutlineRect = ControlRect;
+                    if (!Suspended) OnMoveBegin(e);
+                }
+            }
+
+            ToolTipOut();
+
+            if (!Suspended) OnMouseDown(TransformPosition(e));
+        }
+
+        private void MouseUpProcess(MouseEventArgs e)
+        {
+            Invalidate();
+            if (pressed[(int)e.Button] || isMoving || isResizing)
+            {
+                pressed[(int)e.Button] = false;
+
+                if (e.Button == MouseButton.Left)
+                {
+                    if (IsResizing)
+                    {
+                        IsResizing = false;
+                        if (outlineResizing)
+                        {
+                            Left = OutlineRect.Left;
+                            Top = OutlineRect.Top;
+                            Width = OutlineRect.Width;
+                            Height = OutlineRect.Height;
+                            OutlineRect = Rectangle.Empty;
+                        }
+                        if (!Suspended) OnResizeEnd(e);
+                    }
+                    else if (IsMoving)
+                    {
+                        IsMoving = false;
+                        if (outlineMoving)
+                        {
+                            Left = OutlineRect.Left;
+                            Top = OutlineRect.Top;
+                            OutlineRect = Rectangle.Empty;
+                        }
+                        if (!Suspended) OnMoveEnd(e);
+                    }
+                }
+                if (!Suspended) OnMouseUp(TransformPosition(e));
+            }
+        }
+
+        void MousePressProcess(MouseEventArgs e)
+        {
+            if (pressed[(int)e.Button] && !IsMoving && !IsResizing)
+            {
+                if (!Suspended) OnMousePress(TransformPosition(e));
+            }
+        }
+
+        private void MouseOverProcess(MouseEventArgs e)
+        {
+            Invalidate();
+            hovered = true;
+            ToolTipOver();
+
+            if (cursor != null && Manager.Cursor != cursor) Manager.Cursor = cursor;
+            if (!Suspended) OnMouseOver(e);
+        }
+
+        private void MouseOutProcess(MouseEventArgs e)
+        {
+            Invalidate();
+            hovered = false;
+            ToolTipOut();
+
+            Manager.Cursor = Manager.Skin.Cursors["Default"].Resource;
+            if (!Suspended) OnMouseOut(e);
+        }
+
+        private void MouseMoveProcess(MouseEventArgs e)
+        {
+            if (CheckPosition(e.Position) && !inside)
+            {
+                inside = true;
+                Invalidate();
+            }
+            else if (!CheckPosition(e.Position) && inside)
+            {
+                inside = false;
+                Invalidate();
+            }
+
+            PerformResize(e);
+
+            if (!IsResizing && IsMoving)
+            {
+                int x = (parent != null) ? parent.AbsoluteLeft : 0;
+                int y = (parent != null) ? parent.AbsoluteTop : 0;
+
+                int l = e.Position.X - x - pressSpot.X - leftModifier;
+                int t = e.Position.Y - y - pressSpot.Y - topModifier;
+
+                if (!Suspended)
+                {
+                    MoveEventArgs v = new MoveEventArgs(l, t, Left, Top);
+                    OnValidateMove(v);
+
+                    l = v.Left;
+                    t = v.Top;
+                }
+
+                if (outlineMoving)
+                {
+                    OutlineRect = new Rectangle(l, t, OutlineRect.Width, OutlineRect.Height);
+                    if (parent != null) parent.Invalidate();
+                }
+                else
+                {
+                    Left = l;
+                    Top = t;
+                }
+            }
+
+            if (!Suspended)
+                OnMouseMove(TransformPosition(e));
+        }
+
+        private void ClickProcess(EventArgs e)
+        {
+            long timer = (long)TimeSpan.FromTicks(DateTime.Now.Ticks).TotalMilliseconds;
+            MouseEventArgs ex = (e is MouseEventArgs) ? (MouseEventArgs)e : new MouseEventArgs();
+
+            if ((doubleClickTimer == 0 || (timer - doubleClickTimer > Manager.DoubleClickTime)) || !doubleClicks)
+            {
+                TimeSpan ts = new TimeSpan(DateTime.Now.Ticks);
+                doubleClickTimer = (long)ts.TotalMilliseconds;
+                doubleClickButton = ex.Button;
+
+                if (!Suspended) OnClick(e);
+            }
+            else if (timer - doubleClickTimer <= Manager.DoubleClickTime && (ex.Button == doubleClickButton && ex.Button != MouseButton.None))
+            {
+                doubleClickTimer = 0;
+                if (!Suspended) OnDoubleClick(e);
+            }
+            else
+                doubleClickButton = MouseButton.None;
+
+            if (ex.Button == MouseButton.Right && contextMenu != null && !e.Handled)
+                contextMenu.Show(this, ex.Position.X, ex.Position.Y);
+        }
+
+        private void ToolTipUpdate()
+        {
+            if (Manager.ToolTipsEnabled && toolTip != null && tooltipTimer > 0 && (TimeSpan.FromTicks(DateTime.Now.Ticks).TotalMilliseconds - tooltipTimer) >= Manager.ToolTipDelay)
+            {
+                tooltipTimer = 0;
+                toolTip.Visible = true;
+                Manager.Add(toolTip);
+            }
+        }
+
+        private void ToolTipOver()
+        {
+            if (Manager.ToolTipsEnabled && toolTip != null && tooltipTimer == 0)
+            {
+                TimeSpan ts = new TimeSpan(DateTime.Now.Ticks);
+                tooltipTimer = (long)ts.TotalMilliseconds;
+            }
+        }
+
+        private void ToolTipOut()
+        {
+            if (Manager.ToolTipsEnabled && toolTip != null)
+            {
+                tooltipTimer = 0;
+                toolTip.Visible = false;
+                Manager.Remove(toolTip);
+            }
+        }
+
+        private bool CheckPosition(Point pos)
+        {
+            if ((pos.X >= AbsoluteLeft) && (pos.X < AbsoluteLeft + Width))
+            {
+                if ((pos.Y >= AbsoluteTop) && (pos.Y < AbsoluteTop + Height))
+                    return true;
+            }
+            return false;
+        }
+
+        private bool CheckMovableArea(Point pos)
+        {
+            if (movable)
+            {
+                Rectangle rect = movableArea;
+                if (rect == Rectangle.Empty)
+                    rect = new Rectangle(0, 0, width, height);
+
+                pos.X -= AbsoluteLeft;
+                pos.Y -= AbsoluteTop;
+
+                if ((pos.X >= rect.X) && (pos.X < rect.X + rect.Width))
+                {
+                    if ((pos.Y >= rect.Y) && (pos.Y < rect.Y + rect.Height))
+                        return true;
+                }
+            }
+            return false;
+        }
+
+        private bool CheckResizableArea(Point pos)
+        {
+            if (resizable)
+            {
+                pos.X -= AbsoluteLeft;
+                pos.Y -= AbsoluteTop;
+
+                if ((pos.X >= 0 && pos.X < resizerSize && pos.Y >= 0 && pos.Y < Height) ||
+                    (pos.X >= Width - resizerSize && pos.X < Width && pos.Y >= 0 && pos.Y < Height) ||
+                    (pos.Y >= 0 && pos.Y < resizerSize && pos.X >= 0 && pos.X < Width) ||
+                    (pos.Y >= Height - resizerSize && pos.Y < Height && pos.X >= 0 && pos.X < Width))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private MouseEventArgs TransformPosition(MouseEventArgs e)
+        {
+            MouseEventArgs ee = new MouseEventArgs(e.State, e.Button, e.Position);
+            ee.Difference = e.Difference;
+
+            ee.Position.X = ee.State.X - AbsoluteLeft;
+            ee.Position.Y = ee.State.Y - AbsoluteTop;
+            return ee;
+        }
+
+        private int CheckWidth(ref int w)
+        {
+            int diff = 0;
+
+            if (w > MaximumWidth)
+            {
+                diff = MaximumWidth - w;
+                w = MaximumWidth;
+            }
+            if (w < MinimumWidth)
+            {
+                diff = MinimumWidth - w;
+                w = MinimumWidth;
+            }
+
+            return diff;
+        }
+
+        private int CheckHeight(ref int h)
+        {
+            int diff = 0;
+
+            if (h > MaximumHeight)
+            {
+                diff = MaximumHeight - h;
+                h = MaximumHeight;
+            }
+            if (h < MinimumHeight)
+            {
+                diff = MinimumHeight - h;
+                h = MinimumHeight;
+            }
+
+            return diff;
+        }
+
+        private void PerformResize(MouseEventArgs e)
+        {
+            if (resizable && !IsMoving)
+            {
+                if (!IsResizing)
+                {
+                    GetResizePosition(e);
+                    Manager.Cursor = Cursor = GetResizeCursor();
+                }
+
+                if (IsResizing)
+                {
+                    invalidated = true;
+
+                    bool top = false;
+                    bool bottom = false;
+                    bool left = false;
+                    bool right = false;
+
+                    if ((resizeArea == Alignment.TopCenter || resizeArea == Alignment.TopLeft || resizeArea == Alignment.TopRight) && (resizeEdge & Anchors.Top) == Anchors.Top)
+                        top = true;
+
+                    else if ((resizeArea == Alignment.BottomCenter || resizeArea == Alignment.BottomLeft || resizeArea == Alignment.BottomRight) && (resizeEdge & Anchors.Bottom) == Anchors.Bottom)
+                        bottom = true;
+
+                    if ((resizeArea == Alignment.MiddleLeft || resizeArea == Alignment.BottomLeft || resizeArea == Alignment.TopLeft) && (resizeEdge & Anchors.Left) == Anchors.Left)
+                        left = true;
+
+                    else if ((resizeArea == Alignment.MiddleRight || resizeArea == Alignment.BottomRight || resizeArea == Alignment.TopRight) && (resizeEdge & Anchors.Right) == Anchors.Right)
+                        right = true;
+
+                    int w = Width;
+                    int h = Height;
+                    int l = Left;
+                    int t = Top;
+
+                    if (outlineResizing && !OutlineRect.IsEmpty)
+                    {
+                        l = OutlineRect.Left;
+                        t = OutlineRect.Top;
+                        w = OutlineRect.Width;
+                        h = OutlineRect.Height;
+                    }
+
+                    int px = e.Position.X - (parent != null ? parent.AbsoluteLeft : 0);
+                    int py = e.Position.Y - (parent != null ? parent.AbsoluteTop : 0);
+
+                    if (left)
+                    {
+                        w = w + (l - px) + leftModifier + pressDiff[0];
+                        l = px - leftModifier - pressDiff[0] - CheckWidth(ref w);
+
+                    }
+                    else if (right)
+                    {
+                        w = px - l - leftModifier + pressDiff[2];
+                        CheckWidth(ref w);
+                    }
+
+                    if (top)
+                    {
+                        h = h + (t - py) + topModifier + pressDiff[1];
+                        t = py - topModifier - pressDiff[1] - CheckHeight(ref h);
+                    }
+                    else if (bottom)
+                    {
+                        h = py - t - topModifier + pressDiff[3];
+                        CheckHeight(ref h);
+                    }
+
+                    if (!Suspended)
+                    {
+                        ResizeEventArgs v = new ResizeEventArgs(w, h, Width, Height);
+                        OnValidateResize(v);
+
+                        if (top)
+                        {
+                            // Compensate for a possible height change from Validate event
+                            t += (h - v.Height);
+                        }
+                        if (left)
+                        {
+                            // Compensate for a possible width change from Validate event
+                            l += (w - v.Width);
+                        }
+                        w = v.Width;
+                        h = v.Height;
+                    }
+
+                    if (outlineResizing)
+                    {
+                        OutlineRect = new Rectangle(l, t, w, h);
+                        if (parent != null) parent.Invalidate();
+                    }
+                    else
+                    {
+                        Width = w;
+                        Height = h;
+                        Top = t;
+                        Left = l;
+                    }
+                }
+            }
+        }
+
+        private Cursor GetResizeCursor()
+        {
+            Cursor cur = Cursor;
+            switch (resizeArea)
+            {
+                case Alignment.TopCenter:
+                    {
+                        return ((resizeEdge & Anchors.Top) == Anchors.Top) ? Manager.Skin.Cursors["Vertical"].Resource : Cursor;
+                    }
+                case Alignment.BottomCenter:
+                    {
+                        return ((resizeEdge & Anchors.Bottom) == Anchors.Bottom) ? Manager.Skin.Cursors["Vertical"].Resource : Cursor;
+                    }
+                case Alignment.MiddleLeft:
+                    {
+                        return ((resizeEdge & Anchors.Left) == Anchors.Left) ? Manager.Skin.Cursors["Horizontal"].Resource : Cursor;
+                    }
+                case Alignment.MiddleRight:
+                    {
+                        return ((resizeEdge & Anchors.Right) == Anchors.Right) ? Manager.Skin.Cursors["Horizontal"].Resource : Cursor;
+                    }
+                case Alignment.TopLeft:
+                    {
+                        return ((resizeEdge & Anchors.Left) == Anchors.Left && (resizeEdge & Anchors.Top) == Anchors.Top) ? Manager.Skin.Cursors["DiagonalLeft"].Resource : Cursor;
+                    }
+                case Alignment.BottomRight:
+                    {
+                        return ((resizeEdge & Anchors.Bottom) == Anchors.Bottom && (resizeEdge & Anchors.Right) == Anchors.Right) ? Manager.Skin.Cursors["DiagonalLeft"].Resource : Cursor;
+                    }
+                case Alignment.TopRight:
+                    {
+                        return ((resizeEdge & Anchors.Top) == Anchors.Top && (resizeEdge & Anchors.Right) == Anchors.Right) ? Manager.Skin.Cursors["DiagonalRight"].Resource : Cursor;
+                    }
+                case Alignment.BottomLeft:
+                    {
+                        return ((resizeEdge & Anchors.Bottom) == Anchors.Bottom && (resizeEdge & Anchors.Left) == Anchors.Left) ? Manager.Skin.Cursors["DiagonalRight"].Resource : Cursor;
+                    }
+            }
+            return Manager.Skin.Cursors["Default"].Resource;
+        }
+
+        private void GetResizePosition(MouseEventArgs e)
+        {
+            int x = e.Position.X - AbsoluteLeft;
+            int y = e.Position.Y - AbsoluteTop;
+            bool l = false, t = false, r = false, b = false;
+
+            resizeArea = Alignment.None;
+
+            if (CheckResizableArea(e.Position))
+            {
+                if (x < resizerSize) l = true;
+                if (x >= Width - resizerSize) r = true;
+                if (y < resizerSize) t = true;
+                if (y >= Height - resizerSize) b = true;
+
+                if (l && t) resizeArea = Alignment.TopLeft;
+                else if (l && b) resizeArea = Alignment.BottomLeft;
+                else if (r && t) resizeArea = Alignment.TopRight;
+                else if (r && b) resizeArea = Alignment.BottomRight;
+                else if (l) resizeArea = Alignment.MiddleLeft;
+                else if (t) resizeArea = Alignment.TopCenter;
+                else if (r) resizeArea = Alignment.MiddleRight;
+                else if (b) resizeArea = Alignment.BottomCenter;
+            }
+            else
+            {
+                resizeArea = Alignment.None;
+            }
         }
         #endregion
 
