@@ -138,7 +138,7 @@ namespace AsteriaClient.Interface.Controls
         /// <summary>
         /// Gets or sets the value indicating whether this control can be moved by the mouse.
         /// </summary>
-        public virtual bool Moveable { get { return movable; } set { movable = value; } }
+        public virtual bool Movable { get { return movable; } set { movable = value; } }
 
         /// <summary>
         /// Gets or sets the value indicating whether this control can be resized by the mouse.
@@ -859,7 +859,7 @@ namespace AsteriaClient.Interface.Controls
             else if (Manager.Skin == null)
                 throw new Exception("Control cannot be created. No skin loaded.");
 
-            text = Utilities.DerviceControlName(this);
+            text = Utilities.DeriveControlName(this);
             root = this;
 
             InitSkin();
@@ -1108,6 +1108,24 @@ namespace AsteriaClient.Interface.Controls
             }
         }
 
+        private void DrawControls(Renderer renderer, Rectangle rect, GameTime gameTime, bool firstDetach)
+        {
+            renderer.Begin(BlendingMode.Default);
+
+            DrawingRect = rect;
+            DrawControl(renderer, rect, gameTime);
+
+            DrawEventArgs args = new DrawEventArgs();
+            args.Rectangle = rect;
+            args.Renderer = renderer;
+            args.GameTime = gameTime;
+            OnDraw(args);
+
+            renderer.End();
+
+            DrawChildControls(renderer, gameTime, firstDetach);
+        }
+
         private void DrawDetached(Control control, Renderer renderer, GameTime gameTime)
         {
             if (control.Controls != null)
@@ -1241,6 +1259,84 @@ namespace AsteriaClient.Interface.Controls
 
                 Top += (diff / 2);
             }
+        }
+        #endregion
+
+        #region Protected
+        public override void Init()
+        {
+            base.Init();
+
+            OnMove(new MoveEventArgs());
+            OnResize(new ResizeEventArgs());
+        }
+
+        protected internal virtual void InitSkin()
+        {
+            if (Manager != null && Manager.Skin != null && Manager.Skin.Controls != null)
+            {
+                SkinControl s = Manager.Skin.Controls[Utilities.DeriveControlName(this)];
+                if (s != null) Skin = new SkinControl(s);
+                else Skin = new SkinControl(Manager.Skin.Controls["Control"]);
+            }
+            else
+                throw new Exception("Control skin cannot be initialized. No skin loaded.");
+        }
+
+        protected virtual void SetDefaultSize(int width, int height)
+        {
+            if (skin.DefaultSize.Width > 0) Width = skin.DefaultSize.Width;
+            else Width = width;
+            if (skin.DefaultSize.Height > 0) Height = skin.DefaultSize.Height;
+            else Height = height;
+        }
+
+        protected virtual void SetMinimumSize(int minimumWidth, int minimumHeight)
+        {
+            if (skin.MinimumSize.Width > 0) MinimumWidth = skin.MinimumSize.Width;
+            else MinimumWidth = minimumWidth;
+            if (skin.MinimumSize.Height > 0) MinimumHeight = skin.MinimumSize.Height;
+            else MinimumHeight = minimumHeight;
+        }
+
+        protected internal void OnDeviceSettingsChanged(DeviceEventArgs e)
+        {
+            if (!e.Handled)
+                Invalidate();
+        }
+
+        protected virtual void DrawControl(Renderer renderer, Rectangle rect, GameTime gameTime)
+        {
+            if (backColor != UndefinedColor && backColor != Color.Transparent)
+                renderer.Draw(Manager.Skin.Images["Control"].Resource, rect, backColor);
+
+            renderer.DrawLayer(this, skin.Layers[0], rect);
+        }
+
+        protected internal override void Update(GameTime gameTime)
+        {
+            base.Update(gameTime);
+            ToolTipUpdate();
+
+            if (controls != null)
+            {
+                ControlList list = new ControlList();
+                list.AddRange(controls);
+                foreach (Control c in list)
+                    c.Update(gameTime);
+            }
+        }
+
+        protected internal virtual void CheckLayer(SkinControl skin, string layer)
+        {
+            if (!(skin != null && skin.Layers != null && skin.Layers.Count > 0 && skin.Layers[layer] != null))
+                throw new Exception("Unable to read skin layer \"" + layer + "\" for control \"" + Utilities.DeriveControlName(this) + "\".");
+        }
+
+        protected internal virtual void CheckLayer(SkinControl skin, int layer)
+        {
+            if (!(skin != null && skin.Layers != null && skin.Layers.Count > 0 && skin.Layers[layer] != null))
+                throw new Exception("Unable to read skin layer with index \"" + layer.ToString() + "\" for control \"" + Utilities.DeriveControlName(this) + "\".");
         }
         #endregion
 
@@ -1410,21 +1506,6 @@ namespace AsteriaClient.Interface.Controls
                 case Message.MouseOut:
                     {
                         MouseOutProcess(e as MouseEventArgs);
-                        break;
-                    }
-                case Message.GamePadDown:
-                    {
-                        GamePadDownProcess(e as GamePadEventArgs);
-                        break;
-                    }
-                case Message.GamePadUp:
-                    {
-                        GamePadUpProcess(e as GamePadEventArgs);
-                        break;
-                    }
-                case Message.GamePadPress:
-                    {
-                        GamePadPressProcess(e as GamePadEventArgs);
                         break;
                     }
                 case Message.KeyDown:
@@ -1980,12 +2061,12 @@ namespace AsteriaClient.Interface.Controls
             if (MouseOut != null) MouseOut.Invoke(this, e);
         }
 
-        protected virtual void OnClick(MouseEventArgs e)
+        protected virtual void OnClick(EventArgs e)
         {
             if (Click != null) Click.Invoke(this, e);
         }
 
-        protected virtual void OnDoubleClick(MouseEventArgs e)
+        protected virtual void OnDoubleClick(EventArgs e)
         {
             if (DoubleClick != null) DoubleClick.Invoke(this, e);
         }

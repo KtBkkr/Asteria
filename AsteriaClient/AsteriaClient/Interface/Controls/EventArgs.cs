@@ -8,7 +8,7 @@ namespace AsteriaClient.Interface.Controls
 {
     public class EventArgs : System.EventArgs
     {
-        #region Variables
+        #region Fields
         public bool Handled = false;
         #endregion
 
@@ -140,6 +140,44 @@ namespace AsteriaClient.Interface.Controls
             Rectangle = rectangle;
             GameTime = gameTime;
         }
+        #endregion
+    }
+
+    public class DeviceEventArgs : EventArgs
+    {
+        #region Fields
+        public PreparingDeviceSettingsEventArgs DeviceSettings = null;
+        #endregion
+
+        #region Constructors
+        public DeviceEventArgs() { }
+
+        public DeviceEventArgs(PreparingDeviceSettingsEventArgs deviceSettings)
+        {
+            DeviceSettings = deviceSettings;
+        }
+        #endregion
+    }
+
+    public class WindowClosingEventArgs : EventArgs
+    {
+        #region Fields
+        public bool Cancel = false;
+        #endregion
+
+        #region Constructors
+        public WindowClosingEventArgs() { }
+        #endregion
+    }
+
+    public class WindowClosedEventArgs : EventArgs
+    {
+        #region Fields
+        public bool Dispose = false;
+        #endregion
+
+        #region Constructors
+        public WindowClosedEventArgs() { }
         #endregion
     }
 }

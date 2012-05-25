@@ -8,7 +8,7 @@ namespace AsteriaClient.Interface.Controls
 {
     public class MenuItem : Unknown
     {
-        #region Variables
+        #region Fields
         public string Text = "MenuItem";
         public List<MenuItem> Items = new List<MenuItem>();
         public bool Separated = false;
@@ -54,7 +54,7 @@ namespace AsteriaClient.Interface.Controls
 
     public abstract class MenuBase : Control
     {
-        #region Methods
+        #region Fields
         private int itemIndex = -1;
         private List<MenuItem> items = new List<MenuItem>();
         private MenuBase childMenu = null;

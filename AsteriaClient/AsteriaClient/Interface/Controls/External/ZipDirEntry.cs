@@ -87,7 +87,7 @@ namespace AsteriaClient.Interface.Controls.External
         internal static ZipDirEntry Read(System.IO.Stream s, bool TurnOnDebug)
         {
 
-            int signature = TomShane.Neoforce.External.Zip.Shared.ReadSignature(s);
+            int signature = Shared.ReadSignature(s);
             // return null if this is not a local file header signature
             if (SignatureIsNotValid(signature))
             {
@@ -113,7 +113,7 @@ namespace AsteriaClient.Interface.Controls.External
             zde._CompressedSize = block[i++] + block[i++] * 256 + block[i++] * 256 * 256 + block[i++] * 256 * 256 * 256;
             zde._UncompressedSize = block[i++] + block[i++] * 256 + block[i++] * 256 * 256 + block[i++] * 256 * 256 * 256;
 
-            zde._LastModified = TomShane.Neoforce.External.Zip.Shared.PackedToDateTime(zde._LastModDateTime);
+            zde._LastModified = Shared.PackedToDateTime(zde._LastModDateTime);
 
             Int16 filenameLength = (short)(block[i++] + block[i++] * 256);
             Int16 extraFieldLength = (short)(block[i++] + block[i++] * 256);
@@ -125,14 +125,14 @@ namespace AsteriaClient.Interface.Controls.External
 
             block = new byte[filenameLength];
             n = s.Read(block, 0, block.Length);
-            zde._FileName = TomShane.Neoforce.External.Zip.Shared.StringFromBuffer(block, 0, block.Length);
+            zde._FileName = Shared.StringFromBuffer(block, 0, block.Length);
 
             zde._Extra = new byte[extraFieldLength];
             n = s.Read(zde._Extra, 0, zde._Extra.Length);
 
             block = new byte[commentLength];
             n = s.Read(block, 0, block.Length);
-            zde._Comment = TomShane.Neoforce.External.Zip.Shared.StringFromBuffer(block, 0, block.Length);
+            zde._Comment = Shared.StringFromBuffer(block, 0, block.Length);
 
             return zde;
         }

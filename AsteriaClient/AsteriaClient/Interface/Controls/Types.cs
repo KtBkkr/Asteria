@@ -56,6 +56,24 @@ namespace AsteriaClient.Interface.Controls
         All = Left | Top | Right | Bottom
     }
 
+    public enum ModalResult
+    {
+        None,
+        Ok,
+        Cancel,
+        Yes,
+        No,
+        Abort,
+        Retry,
+        Ignore
+    }
+
+    public enum Orientation
+    {
+        Horizontal,
+        Vertical
+    }
+
     public enum SizeMode
     {
         Normal,
