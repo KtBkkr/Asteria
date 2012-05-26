@@ -28,7 +28,7 @@ namespace AsteriaClient.Interface
         public Gui(Game1 game)
         {
             manager = new Manager(game);
-            manager.SkinDirectory = @"C:\Users\Katie\Desktop\Neoforce\Skins\";
+            manager.SkinDirectory = @"Content\Skins\";
             manager.SetSkin("Default");
             manager.Initialize();
 
