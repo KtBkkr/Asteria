@@ -74,6 +74,14 @@ namespace AsteriaClient.Interface.Controls
         Vertical
     }
 
+    public enum ScrollBars
+    {
+        None,
+        Vertical,
+        Horizontal,
+        Both
+    }
+
     public enum SizeMode
     {
         Normal,

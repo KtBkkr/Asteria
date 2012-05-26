@@ -69,7 +69,7 @@ namespace AsteriaClient.Interface.Controls
             set { itemIndex = value; }
         }
 
-        protected List<MenuItem> Items
+        public List<MenuItem> Items
         {
             get { return items; }
         }

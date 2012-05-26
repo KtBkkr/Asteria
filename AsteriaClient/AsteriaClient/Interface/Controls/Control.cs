@@ -103,7 +103,7 @@ namespace AsteriaClient.Interface.Controls
         /// <summary>
         /// Gets or sets a rectangular area that reacts on moving the control with the mouse.
         /// </summary>
-        public virtual Rectangle MoveableArea { get { return movableArea; } set { movableArea = value; } }
+        public virtual Rectangle MovableArea { get { return movableArea; } set { movableArea = value; } }
 
         /// <summary>
         /// Gets a vlue indicating whether this control is a child control.
