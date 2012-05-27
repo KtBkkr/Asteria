@@ -244,10 +244,7 @@ namespace AsteriaClient.Interface.Controls
         /// </summary>
         public virtual bool Focused
         {
-            get
-            {
-                return (Manager.FocusedControl == this);
-            }
+            get { return (Manager.FocusedControl == this); }
             set
             {
                 this.Invalidate();
@@ -257,9 +254,7 @@ namespace AsteriaClient.Interface.Controls
                     Manager.FocusedControl = this;
                     if (!Suspended && value && !f) OnFocusGained(new EventArgs());
                     if (Focused && Root != null && Root is Container)
-                    {
                         (Root as Container).ScrollTo(this);
-                    }
                 }
                 else
                 {
@@ -328,9 +323,8 @@ namespace AsteriaClient.Interface.Controls
             get
             {
                 for (int i = 0; i < pressed.Length - 1; i++)
-                {
                     if (pressed[i]) return true;
-                }
+
                 return false;
             }
         }
@@ -646,11 +640,13 @@ namespace AsteriaClient.Interface.Controls
 
                     if (skin != null)
                     {
-                        if (width + skin.OriginMargins.Horizontal > MaximumWidth) width = MaximumWidth - skin.OriginMargins.Horizontal;
+                        if (width + skin.OriginMargins.Horizontal > MaximumWidth)
+                            width = MaximumWidth - skin.OriginMargins.Horizontal;
                     }
                     else
                     {
-                        if (width > MaximumWidth) width = MaximumWidth;
+                        if (width > MaximumWidth)
+                            width = MaximumWidth;
                     }
 
                     if (width < MinimumWidth) width = MinimumWidth;
@@ -680,7 +676,8 @@ namespace AsteriaClient.Interface.Controls
                     }
                     else
                     {
-                        if (height > MaximumHeight) height = MaximumHeight;
+                        if (height > MaximumHeight)
+                            height = MaximumHeight;
                     }
 
                     if (height < MinimumHeight) height = MinimumHeight;
@@ -1030,12 +1027,12 @@ namespace AsteriaClient.Interface.Controls
             if (this.Parent is Container && (this.Parent as Container).AutoScroll)
             {
                 int maxy = 0;
-
                 foreach (Control c in Controls)
                 {
                     if ((c.Anchor & Anchors.Bottom) != Anchors.Bottom && c.Visible)
                     {
-                        if (c.Top + c.Height > maxy) maxy = c.Top + c.Height;
+                        if (c.Top + c.Height > maxy)
+                            maxy = c.Top + c.Height;
                     }
                 }
                 if (maxy < Height) maxy = Height;
@@ -1051,12 +1048,12 @@ namespace AsteriaClient.Interface.Controls
             if (this.Parent is Container && (this.Parent as Container).AutoScroll)
             {
                 int maxx = 0;
-
                 foreach (Control c in Controls)
                 {
                     if ((c.Anchor & Anchors.Right) != Anchors.Right && c.Visible)
                     {
-                        if (c.Left + c.Width > maxx) maxx = c.Left + c.Width;
+                        if (c.Left + c.Width > maxx)
+                            maxx = c.Left + c.Width;
                     }
                 }
                 if (maxx < Width) maxx = Width;
@@ -1064,9 +1061,7 @@ namespace AsteriaClient.Interface.Controls
                 return maxx;
             }
             else
-            {
                 return Width;
-            }
         }
 
         private Rectangle GetClippingRect(Control c)
@@ -1169,12 +1164,10 @@ namespace AsteriaClient.Interface.Controls
             while (parent != null)
             {
                 if (parent.Detached)
-                {
                     return true;
-                }
+
                 parent = parent.Parent;
             }
-
             return c.Detached;
         }
 
@@ -1258,7 +1251,6 @@ namespace AsteriaClient.Interface.Controls
                     renderer.End();
 
                     DrawDetached(this, renderer, gameTime);
-
                     DrawOutline(renderer, false);
                 }
             }
@@ -1270,9 +1262,7 @@ namespace AsteriaClient.Interface.Controls
             {
                 Rectangle r = OutlineRect;
                 if (child)
-                {
                     r = new Rectangle(OutlineRect.Left + (parent.AbsoluteLeft - root.AbsoluteLeft), OutlineRect.Top + (parent.AbsoluteTop - root.AbsoluteTop), OutlineRect.Width, OutlineRect.Height);
-                }
 
                 Texture2D t = Manager.Skin.Controls["Control.Outline"].Layers[0].Image.Resource;
 
@@ -1295,9 +1285,7 @@ namespace AsteriaClient.Interface.Controls
             {
                 Rectangle r = ControlRect;
                 if (child)
-                {
                     r = new Rectangle(r.Left + (parent.AbsoluteLeft - root.AbsoluteLeft), r.Top + (parent.AbsoluteTop - root.AbsoluteTop), r.Width, r.Height);
-                }
 
                 Texture2D t = Manager.Skin.Controls["Control.Outline"].Layers[0].Image.Resource;
 
@@ -1340,45 +1328,33 @@ namespace AsteriaClient.Interface.Controls
                 anchorMargins.Bottom = Parent.VirtualHeight - Height - Top;
             }
             else
-            {
                 anchorMargins = new Margins();
-            }
         }
 
         private void ProcessAnchor(ResizeEventArgs e)
         {
             if (((Anchor & Anchors.Right) == Anchors.Right) && ((Anchor & Anchors.Left) != Anchors.Left))
-            {
                 Left = Parent.VirtualWidth - Width - anchorMargins.Right;
-            }
             else if (((Anchor & Anchors.Right) == Anchors.Right) && ((Anchor & Anchors.Left) == Anchors.Left))
-            {
                 Width = Parent.VirtualWidth - Left - anchorMargins.Right;
-            }
             else if (((Anchor & Anchors.Right) != Anchors.Right) && ((Anchor & Anchors.Left) != Anchors.Left))
             {
                 int diff = (e.Width - e.OldWidth);
                 if (e.Width % 2 != 0 && diff != 0)
-                {
                     diff += (diff / Math.Abs(diff));
-                }
+
                 Left += (diff / 2);
             }
             if (((Anchor & Anchors.Bottom) == Anchors.Bottom) && ((Anchor & Anchors.Top) != Anchors.Top))
-            {
                 Top = Parent.VirtualHeight - Height - anchorMargins.Bottom;
-            }
             else if (((Anchor & Anchors.Bottom) == Anchors.Bottom) && ((Anchor & Anchors.Top) == Anchors.Top))
-            {
                 Height = Parent.VirtualHeight - Top - anchorMargins.Bottom;
-            }
             else if (((Anchor & Anchors.Bottom) != Anchors.Bottom) && ((Anchor & Anchors.Top) != Anchors.Top))
             {
                 int diff = (e.Height - e.OldHeight);
                 if (e.Height % 2 != 0 && diff != 0)
-                {
                     diff += (diff / Math.Abs(diff));
-                }
+
                 Top += (diff / 2);
             }
         }
@@ -1402,9 +1378,7 @@ namespace AsteriaClient.Interface.Controls
                 else Skin = new SkinControl(Manager.Skin.Controls["Control"]);
             }
             else
-            {
                 throw new Exception("Control skin cannot be initialized. No skin loaded.");
-            }
         }
 
         protected virtual void SetDefaultSize(int width, int height)
@@ -1426,17 +1400,14 @@ namespace AsteriaClient.Interface.Controls
         protected internal void OnDeviceSettingsChanged(DeviceEventArgs e)
         {
             if (!e.Handled)
-            {
                 Invalidate();
-            }
         }
 
         protected virtual void DrawControl(Renderer renderer, Rectangle rect, GameTime gameTime)
         {
             if (backColor != UndefinedColor && backColor != Color.Transparent)
-            {
                 renderer.Draw(Manager.Skin.Images["Control"].Resource, rect, backColor);
-            }
+
             renderer.DrawLayer(this, skin.Layers[0], rect);
         }
 
@@ -1451,26 +1422,20 @@ namespace AsteriaClient.Interface.Controls
                 ControlList list = new ControlList();
                 list.AddRange(controls);
                 foreach (Control c in list)
-                {
                     c.Update(gameTime);
-                }
             }
         }
 
         protected internal virtual void CheckLayer(SkinControl skin, string layer)
         {
             if (!(skin != null && skin.Layers != null && skin.Layers.Count > 0 && skin.Layers[layer] != null))
-            {
                 throw new Exception("Unable to read skin layer \"" + layer + "\" for control \"" + Utilities.DeriveControlName(this) + "\".");
-            }
         }
 
         protected internal virtual void CheckLayer(SkinControl skin, int layer)
         {
             if (!(skin != null && skin.Layers != null && skin.Layers.Count > 0 && skin.Layers[layer] != null))
-            {
                 throw new Exception("Unable to read skin layer with index \"" + layer.ToString() + "\" for control \"" + Utilities.DeriveControlName(this) + "\".");
-            }
         }
         #endregion
 
@@ -1602,55 +1567,44 @@ namespace AsteriaClient.Interface.Controls
             switch (message)
             {
                 case Message.Click:
-                    {
                         ClickProcess(e as MouseEventArgs);
                         break;
-                    }
+
                 case Message.MouseDown:
-                    {
                         MouseDownProcess(e as MouseEventArgs);
                         break;
-                    }
+
                 case Message.MouseUp:
-                    {
                         MouseUpProcess(e as MouseEventArgs);
                         break;
-                    }
+
                 case Message.MousePress:
-                    {
                         MousePressProcess(e as MouseEventArgs);
                         break;
-                    }
+
                 case Message.MouseMove:
-                    {
                         MouseMoveProcess(e as MouseEventArgs);
                         break;
-                    }
+
                 case Message.MouseOver:
-                    {
                         MouseOverProcess(e as MouseEventArgs);
                         break;
-                    }
+
                 case Message.MouseOut:
-                    {
                         MouseOutProcess(e as MouseEventArgs);
                         break;
-                    }
+
                 case Message.KeyDown:
-                    {
                         KeyDownProcess(e as KeyEventArgs);
                         break;
-                    }
+
                 case Message.KeyUp:
-                    {
                         KeyUpProcess(e as KeyEventArgs);
                         break;
-                    }
+
                 case Message.KeyPress:
-                    {
                         KeyPressProcess(e as KeyEventArgs);
                         break;
-                    }
             }
         }
         #endregion
@@ -1767,7 +1721,8 @@ namespace AsteriaClient.Interface.Controls
         {
             if (pressed[(int)e.Button] && !IsMoving && !IsResizing)
             {
-                if (!Suspended) OnMousePress(TransformPosition(e));
+                if (!Suspended)
+                    OnMousePress(TransformPosition(e));
             }
         }
 
@@ -1845,8 +1800,7 @@ namespace AsteriaClient.Interface.Controls
 
             MouseEventArgs ex = (e is MouseEventArgs) ? (MouseEventArgs)e : new MouseEventArgs();
 
-            if ((doubleClickTimer == 0 || (timer - doubleClickTimer > Manager.DoubleClickTime)) ||
-                !doubleClicks)
+            if ((doubleClickTimer == 0 || (timer - doubleClickTimer > Manager.DoubleClickTime)) || !doubleClicks)
             {
                 TimeSpan ts = new TimeSpan(DateTime.Now.Ticks);
                 doubleClickTimer = (long)ts.TotalMilliseconds;
@@ -1912,9 +1866,7 @@ namespace AsteriaClient.Interface.Controls
                 Rectangle rect = movableArea;
 
                 if (rect == Rectangle.Empty)
-                {
                     rect = new Rectangle(0, 0, width, height);
-                }
 
                 pos.X -= AbsoluteLeft;
                 pos.Y -= AbsoluteTop;
@@ -2106,37 +2058,29 @@ namespace AsteriaClient.Interface.Controls
             switch (resizeArea)
             {
                 case Alignment.TopCenter:
-                    {
                         return ((resizeEdge & Anchors.Top) == Anchors.Top) ? Manager.Skin.Cursors["Vertical"].Resource : Cursor;
-                    }
+
                 case Alignment.BottomCenter:
-                    {
                         return ((resizeEdge & Anchors.Bottom) == Anchors.Bottom) ? Manager.Skin.Cursors["Vertical"].Resource : Cursor;
-                    }
+
                 case Alignment.MiddleLeft:
-                    {
                         return ((resizeEdge & Anchors.Left) == Anchors.Left) ? Manager.Skin.Cursors["Horizontal"].Resource : Cursor;
-                    }
+
                 case Alignment.MiddleRight:
-                    {
                         return ((resizeEdge & Anchors.Right) == Anchors.Right) ? Manager.Skin.Cursors["Horizontal"].Resource : Cursor;
-                    }
+
                 case Alignment.TopLeft:
-                    {
                         return ((resizeEdge & Anchors.Left) == Anchors.Left && (resizeEdge & Anchors.Top) == Anchors.Top) ? Manager.Skin.Cursors["DiagonalLeft"].Resource : Cursor;
-                    }
+
                 case Alignment.BottomRight:
-                    {
                         return ((resizeEdge & Anchors.Bottom) == Anchors.Bottom && (resizeEdge & Anchors.Right) == Anchors.Right) ? Manager.Skin.Cursors["DiagonalLeft"].Resource : Cursor;
-                    }
+
                 case Alignment.TopRight:
-                    {
                         return ((resizeEdge & Anchors.Top) == Anchors.Top && (resizeEdge & Anchors.Right) == Anchors.Right) ? Manager.Skin.Cursors["DiagonalRight"].Resource : Cursor;
-                    }
+
                 case Alignment.BottomLeft:
-                    {
                         return ((resizeEdge & Anchors.Bottom) == Anchors.Bottom && (resizeEdge & Anchors.Left) == Anchors.Left) ? Manager.Skin.Cursors["DiagonalRight"].Resource : Cursor;
-                    }
+
             }
             return Manager.Skin.Cursors["Default"].Resource;
         }
