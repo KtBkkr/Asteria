@@ -16,5 +16,6 @@ namespace AsteriaClient.Interface.Controls
     public delegate void ResizeEventHandler(object sender, ResizeEventArgs e);
     public delegate void WindowClosingEventHandler(object sender, WindowClosingEventArgs e);
     public delegate void WindowClosedEventHandler(object sender, WindowClosedEventArgs e);
+    public delegate void ConsoleMessageEventHandler(object sender, ConsoleMessageEventArgs e);
     #endregion
 }

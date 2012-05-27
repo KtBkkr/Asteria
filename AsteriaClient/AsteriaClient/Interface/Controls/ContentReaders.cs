@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Xml;
 using Microsoft.Xna.Framework.Content;
+using System.IO;
+using System.Windows.Forms;
 
 namespace AsteriaClient.Interface.Controls
 {
@@ -27,4 +29,32 @@ namespace AsteriaClient.Interface.Controls
         }
         #endregion
     }
+
+    public class CursorReader : ContentTypeReader<Cursor>
+    {
+        #region Methods
+        protected override Cursor Read(ContentReader input, Cursor existingInstance)
+        {
+            if (existingInstance == null)
+            {
+                int count = input.ReadInt32();
+                byte[] data = input.ReadBytes(count);
+
+                string path = Path.GetTempFileName();
+                File.WriteAllBytes(path, data);
+
+                IntPtr handle = NativeMethods.LoadCursor(path);
+                Cursor cur = new Cursor(handle);
+                File.Delete(path);
+
+                return cur;
+            }
+            else
+            {
+            }
+            return existingInstance;
+        }
+        #endregion
+
+    }   
 }

@@ -8,6 +8,9 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace AsteriaClient.Interface.Controls
 {
+    /// <summary>
+    /// Defines type used as a controls collection.
+    /// </summary>
     public class ControlList : EventedList<Control>
     {
         public ControlList() : base() { }
@@ -15,12 +18,18 @@ namespace AsteriaClient.Interface.Controls
         public ControlList(IEnumerable<Control> collection) : base(collection) { }
     }
 
+    /// <summary>
+    /// Defines the base class for all controls.
+    /// </summary>
     public class Control : Component
     {
-        #region Variables
+        #region Consts
         public static readonly Color UndefinedColor = new Color(255, 255, 255, 0);
+        #endregion
+
+        #region Fields
         internal static ControlList Stack = new ControlList();
-        
+
         private Cursor cursor = null;
         private Color color = UndefinedColor;
         private Color textColor = UndefinedColor;
@@ -90,10 +99,11 @@ namespace AsteriaClient.Interface.Controls
         #endregion
 
         #region Properties
-        /// <summary>
-        /// Gets or sets the cursor displaying over the control.
-        /// </summary>
-        public Cursor Cursor { get { return cursor; } set { cursor = value; } }
+        public Cursor Cursor
+        {
+            get { return cursor; }
+            set { cursor = value; }
+        }
 
         /// <summary>
         /// Gets a list of all child controls.
@@ -106,7 +116,7 @@ namespace AsteriaClient.Interface.Controls
         public virtual Rectangle MovableArea { get { return movableArea; } set { movableArea = value; } }
 
         /// <summary>
-        /// Gets a vlue indicating whether this control is a child control.
+        /// Gets a value indicating whether this control is a child control.
         /// </summary>
         public virtual bool IsChild { get { return (parent != null); } }
 
@@ -116,32 +126,32 @@ namespace AsteriaClient.Interface.Controls
         public virtual bool IsParent { get { return (controls != null && controls.Count > 0); } }
 
         /// <summary>
-        /// Gets or sets the value indicating whether this control is a root control.
+        /// Gets a value indicating whether this control is a root control.
         /// </summary>
         public virtual bool IsRoot { get { return (root == this); } }
 
         /// <summary>
-        /// Gets or sets the value indicating whether this control can receive focus.
+        /// Gets or sets a value indicating whether this control can receive focus. 
         /// </summary>
         public virtual bool CanFocus { get { return canFocus; } set { canFocus = value; } }
 
         /// <summary>
-        /// Gets or sets the value indicating whether this control is rendered off the parents texture.
+        /// Gets or sets a value indicating whether this control is rendered off the parents texture.
         /// </summary>
         public virtual bool Detached { get { return detached; } set { detached = value; } }
 
         /// <summary>
-        /// Gets or sets the value indicating whether this control can receive user input events.
+        /// Gets or sets a value indicating whether this controls can receive user input events.
         /// </summary>
         public virtual bool Passive { get { return passive; } set { passive = value; } }
 
         /// <summary>
-        /// Gets or sets the value indicating whether this control can be moved by the mouse.
+        /// Gets or sets a value indicating whether this control can be moved by the mouse.
         /// </summary>
         public virtual bool Movable { get { return movable; } set { movable = value; } }
 
         /// <summary>
-        /// Gets or sets the value indicating whether this control can be resized by the mouse.
+        /// Gets or sets a value indicating whether this control can be resized by the mouse.
         /// </summary>
         public virtual bool Resizable { get { return resizable; } set { resizable = value; } }
 
@@ -156,17 +166,17 @@ namespace AsteriaClient.Interface.Controls
         public virtual ContextMenu ContextMenu { get { return contextMenu; } set { contextMenu = value; } }
 
         /// <summary>
-        /// Gets or sets the value indicating whether this control should process mouse double clicks.
+        /// Gets or sets a value indicating whether this control should process mouse double-clicks.
         /// </summary>
         public virtual bool DoubleClicks { get { return doubleClicks; } set { doubleClicks = value; } }
 
         /// <summary>
-        /// Gets or sets a value indicating whether this control should use outline resizing.
+        /// Gets or sets a value indicating whether this control should use ouline resizing.
         /// </summary>
         public virtual bool OutlineResizing { get { return outlineResizing; } set { outlineResizing = value; } }
 
         /// <summary>
-        /// Gets or sets a vlue indicating whether this control should use outline moving.
+        /// Gets or sets a value indicating whether this control should use outline moving.
         /// </summary>
         public virtual bool OutlineMoving { get { return outlineMoving; } set { outlineMoving = value; } }
 
@@ -181,41 +191,63 @@ namespace AsteriaClient.Interface.Controls
         public virtual Margins Margins { get { return margins; } set { margins = value; } }
 
         /// <summary>
-        /// Gets or sets the value indicating whether the control is in design mode.
+        /// Gets or sets the value indicating wheter control is in design mode.
         /// </summary>
         public virtual bool DesignMode { get { return designMode; } set { designMode = value; } }
 
-        public virtual bool PartialOutline { get { return partialOutline; } set { partialOutline = value; } }
+        /// <summary>
+        /// Gets or sets the value indicating whether the control outline is displayed only for certain edges. 
+        /// </summary>   
+        public virtual bool PartialOutline
+        {
+            get { return partialOutline; }
+            set { partialOutline = value; }
+        }
 
-        public virtual string Name { get { return name; } set { name = value; } }
-
+        /// <summary>
+        /// Gets or sets the value indicating whether the control is allowed to be brought in the front.
+        /// </summary>
         public virtual bool StayOnBack
         {
             get { return stayOnBack; }
             set
             {
-                if (value && stayOnTop)
-                    stayOnTop = false;
-
+                if (value && stayOnTop) stayOnTop = false;
                 stayOnBack = value;
             }
         }
 
+        /// <summary>
+        /// Gets or sets the value indicating that the control should stay on top of other controls.
+        /// </summary>
         public virtual bool StayOnTop
         {
             get { return stayOnTop; }
             set
             {
-                if (value && stayOnBack)
-                    stayOnBack = false;
-
+                if (value && stayOnBack) stayOnBack = false;
                 stayOnTop = value;
             }
         }
 
+        /// <summary>
+        /// Gets or sets a name of the control.
+        /// </summary>
+        public virtual string Name
+        {
+            get { return name; }
+            set { name = value; }
+        }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether this control has input focus.
+        /// </summary>
         public virtual bool Focused
         {
-            get { return (Manager.FocusedControl == this); }
+            get
+            {
+                return (Manager.FocusedControl == this);
+            }
             set
             {
                 this.Invalidate();
@@ -223,45 +255,38 @@ namespace AsteriaClient.Interface.Controls
                 {
                     bool f = Focused;
                     Manager.FocusedControl = this;
-                    if (!Suspended && value && !f)
-                        OnFocusGained(new EventArgs());
-
+                    if (!Suspended && value && !f) OnFocusGained(new EventArgs());
                     if (Focused && Root != null && Root is Container)
+                    {
                         (Root as Container).ScrollTo(this);
+                    }
                 }
                 else
                 {
                     bool f = Focused;
-                    if (Manager.FocusedControl == this)
-                        Manager.FocusedControl = null;
-
-                    if (!Suspended && !value && f)
-                        OnFocusLost(new EventArgs());
+                    if (Manager.FocusedControl == this) Manager.FocusedControl = null;
+                    if (!Suspended && !value && f) OnFocusLost(new EventArgs());
                 }
             }
         }
 
+        /// <summary>
+        /// Gets a value indicating current state of the control.
+        /// </summary>
         public virtual ControlState ControlState
         {
             get
             {
-                if (DesignMode)
-                    return ControlState.Enabled;
-                else if (Suspended)
-                    return ControlState.Disabled;
+                if (DesignMode) return ControlState.Enabled;
+                else if (Suspended) return ControlState.Disabled;
                 else
                 {
-                    if (!enabled)
-                        return ControlState.Disabled;
+                    if (!enabled) return ControlState.Disabled;
 
-                    if ((IsPressed && inside) || (Focused && IsPressed))
-                        return ControlState.Pressed;
-                    else if (hovered && !IsPressed)
-                        return ControlState.Hovered;
-                    else if ((Focused && !inside) || (hovered && IsPressed && !inside) || (Focused && !hovered && inside))
-                        return ControlState.Focused;
-                    else
-                        return ControlState.Enabled;
+                    if ((IsPressed && inside) || (Focused && IsPressed)) return ControlState.Pressed;
+                    else if (hovered && !IsPressed) return ControlState.Hovered;
+                    else if ((Focused && !inside) || (hovered && IsPressed && !inside) || (Focused && !hovered && inside)) return ControlState.Focused;
+                    else return ControlState.Enabled;
                 }
             }
         }
@@ -304,8 +329,7 @@ namespace AsteriaClient.Interface.Controls
             {
                 for (int i = 0; i < pressed.Length - 1; i++)
                 {
-                    if (pressed[i])
-                        return true;
+                    if (pressed[i]) return true;
                 }
                 return false;
             }
@@ -323,20 +347,20 @@ namespace AsteriaClient.Interface.Controls
             set { leftModifier = value; }
         }
 
-        internal virtual int VirtualWidth
-        {
-            get { return virtualWidth; }
-            set { virtualWidth = value; }
-        }
-
         internal virtual int VirtualHeight
         {
-            get { return virtualHeight; }
-            set { virtualHeight = value; }
+            get { return GetVirtualHeight(); }
+            //set { virtualHeight = value; }
+        }
+
+        internal virtual int VirtualWidth
+        {
+            get { return GetVirtualWidth(); }
+            //set { virtualWidth = value; }
         }
 
         /// <summary>
-        /// Gets an area where the control is supposed to be drawn.
+        /// Gets an area where is the control supposed to be drawn.
         /// </summary>
         public Rectangle DrawingRect
         {
@@ -344,6 +368,9 @@ namespace AsteriaClient.Interface.Controls
             private set { drawingRect = value; }
         }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether this control should receive any events.
+        /// </summary>
         public virtual bool Suspended
         {
             get { return suspended; }
@@ -365,18 +392,27 @@ namespace AsteriaClient.Interface.Controls
             get { return pressed; }
         }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether this controls is currently being moved.
+        /// </summary>
         protected virtual bool IsMoving
         {
             get { return isMoving; }
             set { isMoving = value; }
         }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether this controls is currently being resized.
+        /// </summary>
         protected virtual bool IsResizing
         {
             get { return isResizing; }
             set { isResizing = value; }
         }
 
+        /// <summary>
+        /// Gets or sets the edges of the container to which a control is bound and determines how a control is resized with its parent.
+        /// </summary>
         public virtual Anchors Anchor
         {
             get { return anchor; }
@@ -388,12 +424,18 @@ namespace AsteriaClient.Interface.Controls
             }
         }
 
+        /// <summary>
+        /// Gets or sets the edges of the contol which are allowed for resizing.
+        /// </summary>
         public virtual Anchors ResizeEdge
         {
             get { return resizeEdge; }
             set { resizeEdge = value; }
         }
 
+        /// <summary>
+        /// Gets or sets the skin used for rendering the control.
+        /// </summary>
         public virtual SkinControl Skin
         {
             get { return skin; }
@@ -404,6 +446,9 @@ namespace AsteriaClient.Interface.Controls
             }
         }
 
+        /// <summary>
+        /// Gets or sets the text associated with this control.
+        /// </summary>
         public virtual string Text
         {
             get { return text; }
@@ -415,6 +460,9 @@ namespace AsteriaClient.Interface.Controls
             }
         }
 
+        /// <summary>
+        /// Gets or sets the alpha value for this control.
+        /// </summary>
         public virtual byte Alpha
         {
             get { return alpha; }
@@ -425,6 +473,9 @@ namespace AsteriaClient.Interface.Controls
             }
         }
 
+        /// <summary>
+        /// Gets or sets the background color for the control.
+        /// </summary>
         public virtual Color BackColor
         {
             get { return backColor; }
@@ -436,6 +487,9 @@ namespace AsteriaClient.Interface.Controls
             }
         }
 
+        /// <summary>
+        /// Gets or sets the color for the control.
+        /// </summary>
         public virtual Color Color
         {
             get { return color; }
@@ -450,6 +504,9 @@ namespace AsteriaClient.Interface.Controls
             }
         }
 
+        /// <summary>
+        /// Gets or sets the text color for the control.
+        /// </summary>
         public virtual Color TextColor
         {
             get { return textColor; }
@@ -464,13 +521,15 @@ namespace AsteriaClient.Interface.Controls
             }
         }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether the control can respond to user interaction.
+        /// </summary>
         public virtual bool Enabled
         {
             get { return enabled; }
             set
             {
-                if (Root != null && Root != this && !Root.Enabled && value)
-                    return;
+                if (Root != null && Root != this && !Root.Enabled && value) return;
 
                 enabled = value;
                 Invalidate();
@@ -482,6 +541,9 @@ namespace AsteriaClient.Interface.Controls
             }
         }
 
+        /// <summary>
+        /// Gets or sets a value that indicates whether the control is rendered.
+        /// </summary>
         public virtual bool Visible
         {
             get { return (visible && (parent == null || parent.Visible)); }
@@ -489,10 +551,14 @@ namespace AsteriaClient.Interface.Controls
             {
                 visible = value;
                 Invalidate();
+
                 if (!Suspended) OnVisibleChanged(new EventArgs());
             }
         }
 
+        /// <summary>
+        /// Gets or sets the parent for the control.
+        /// </summary>
         public virtual Control Parent
         {
             get { return parent; }
@@ -506,6 +572,9 @@ namespace AsteriaClient.Interface.Controls
             }
         }
 
+        /// <summary>
+        /// Gets or sets the root for the control.
+        /// </summary>
         public virtual Control Root
         {
             get { return root; }
@@ -514,7 +583,6 @@ namespace AsteriaClient.Interface.Controls
                 if (root != value)
                 {
                     root = value;
-
                     foreach (Control c in controls)
                         c.Root = root;
 
@@ -523,6 +591,9 @@ namespace AsteriaClient.Interface.Controls
             }
         }
 
+        /// <summary>
+        /// Gets or sets the distance, in pixels, between the left edge of the control and the left edge of its parent.
+        /// </summary>
         public virtual int Left
         {
             get { return left; }
@@ -534,11 +605,15 @@ namespace AsteriaClient.Interface.Controls
                     left = value;
 
                     SetAnchorMargins();
+
                     if (!Suspended) OnMove(new MoveEventArgs(left, top, old, top));
                 }
             }
         }
 
+        /// <summary>
+        /// Gets or sets the distance, in pixels, between the top edge of the control and the top edge of its parent.
+        /// </summary>
         public virtual int Top
         {
             get { return top; }
@@ -550,11 +625,15 @@ namespace AsteriaClient.Interface.Controls
                     top = value;
 
                     SetAnchorMargins();
+
                     if (!Suspended) OnMove(new MoveEventArgs(left, top, left, old));
                 }
             }
         }
 
+        /// <summary>
+        /// Gets or sets the width of the control.
+        /// </summary>
         public virtual int Width
         {
             get { return width; }
@@ -567,8 +646,7 @@ namespace AsteriaClient.Interface.Controls
 
                     if (skin != null)
                     {
-                        if (width + skin.OriginMargins.Horizontal > MaximumWidth)
-                            width = MaximumWidth - skin.OriginMargins.Horizontal;
+                        if (width + skin.OriginMargins.Horizontal > MaximumWidth) width = MaximumWidth - skin.OriginMargins.Horizontal;
                     }
                     else
                     {
@@ -582,30 +660,39 @@ namespace AsteriaClient.Interface.Controls
             }
         }
 
+        /// <summary>
+        /// Gets or sets the height of the control.
+        /// </summary>
         public virtual int Height
         {
             get { return height; }
             set
             {
-                int old = height;
-                height = value;
-
-                if (skin != null)
+                if (height != value)
                 {
-                    if (height + skin.OriginMargins.Vertical > MaximumHeight)
-                        height = MaximumHeight - skin.OriginMargins.Vertical;
-                }
-                else
-                {
-                    if (height > MaximumHeight) height = MaximumHeight;
-                }
+                    int old = height;
+                    height = value;
 
-                if (height < MinimumHeight) height = MinimumHeight;
-                if (height > 0) SetAnchorMargins();
-                if (!Suspended) OnResize(new ResizeEventArgs(width, height, width, old));
+                    if (skin != null)
+                    {
+                        if (height + skin.OriginMargins.Vertical > MaximumHeight)
+                            height = MaximumHeight - skin.OriginMargins.Vertical;
+                    }
+                    else
+                    {
+                        if (height > MaximumHeight) height = MaximumHeight;
+                    }
+
+                    if (height < MinimumHeight) height = MinimumHeight;
+                    if (height > 0) SetAnchorMargins();
+                    if (!Suspended) OnResize(new ResizeEventArgs(width, height, width, old));
+                }
             }
         }
 
+        /// <summary>
+        /// Gets or sets the minimum width in pixels the control can be sized to.
+        /// </summary>
         public virtual int MinimumWidth
         {
             get { return minimumWidth; }
@@ -618,6 +705,9 @@ namespace AsteriaClient.Interface.Controls
             }
         }
 
+        /// <summary>
+        /// /// Gets or sets the minimum height in pixels the control can be sized to.
+        /// </summary>
         public virtual int MinimumHeight
         {
             get { return minimumHeight; }
@@ -630,6 +720,9 @@ namespace AsteriaClient.Interface.Controls
             }
         }
 
+        /// <summary>
+        /// /// Gets or sets the maximum width in pixels the control can be sized to.
+        /// </summary>
         public virtual int MaximumWidth
         {
             get
@@ -646,6 +739,9 @@ namespace AsteriaClient.Interface.Controls
             }
         }
 
+        /// <summary>
+        /// Gets or sets the maximum height in pixels the control can be sized to.
+        /// </summary>
         public virtual int MaximumHeight
         {
             get
@@ -728,7 +824,7 @@ namespace AsteriaClient.Interface.Controls
         {
             get
             {
-                //if (skin == null) return left;
+                //if (skin == null) return Left;
                 return ClientMargins.Left;
             }
         }
@@ -737,7 +833,7 @@ namespace AsteriaClient.Interface.Controls
         {
             get
             {
-                //if (skin == null) return top;
+                //if (skin == null) return Top;
                 return ClientMargins.Top;
             }
         }
@@ -759,7 +855,7 @@ namespace AsteriaClient.Interface.Controls
         {
             get
             {
-                if (skin == null) return Height;
+                //if (skin == null) return Height;
                 return OriginHeight - ClientMargins.Top - ClientMargins.Bottom;
             }
             set
@@ -886,15 +982,15 @@ namespace AsteriaClient.Interface.Controls
                 else if (Manager != null) Manager.Remove(this);
                 if (Manager.OrderList != null) Manager.OrderList.Remove(this);
 
-                // Possibly we added the menu to another parent than this control,
-                // so we dispose it manually, because in logic it belongs to this control.
+                // Possibly we added the menu to another parent than this control, 
+                // so we dispose it manually, beacause in logic it belongs to this control.        
                 if (contextMenu != null)
                 {
                     contextMenu.Dispose();
                     contextMenu = null;
                 }
 
-                // Recursively disposing all controls. The collection might change rom it's children,
+                // Recursively disposing all controls. The collection might change from its children, 
                 // so we check it on count greater than zero.
                 if (controls != null)
                 {
@@ -906,7 +1002,7 @@ namespace AsteriaClient.Interface.Controls
                     }
                 }
 
-                // Disposes tooltip owned by manager.
+                // Disposes tooltip owned by Manager        
                 if (toolTip != null && !Manager.Disposing)
                 {
                     toolTip.Dispose();
@@ -934,16 +1030,16 @@ namespace AsteriaClient.Interface.Controls
             if (this.Parent is Container && (this.Parent as Container).AutoScroll)
             {
                 int maxy = 0;
+
                 foreach (Control c in Controls)
                 {
                     if ((c.Anchor & Anchors.Bottom) != Anchors.Bottom && c.Visible)
                     {
-                        if (c.Top + c.Height > maxy)
-                            maxy = c.Top + c.Height;
+                        if (c.Top + c.Height > maxy) maxy = c.Top + c.Height;
                     }
                 }
-
                 if (maxy < Height) maxy = Height;
+
                 return maxy;
             }
             else
@@ -955,6 +1051,7 @@ namespace AsteriaClient.Interface.Controls
             if (this.Parent is Container && (this.Parent as Container).AutoScroll)
             {
                 int maxx = 0;
+
                 foreach (Control c in Controls)
                 {
                     if ((c.Anchor & Anchors.Right) != Anchors.Right && c.Visible)
@@ -963,15 +1060,20 @@ namespace AsteriaClient.Interface.Controls
                     }
                 }
                 if (maxx < Width) maxx = Width;
+
                 return maxx;
             }
             else
+            {
                 return Width;
+            }
         }
 
         private Rectangle GetClippingRect(Control c)
         {
-            Rectangle r = new Rectangle(c.OriginLeft - root.AbsoluteLeft, c.OriginTop - root.AbsoluteTop, c.OriginWidth, c.OriginHeight);
+            Rectangle r = Rectangle.Empty;
+            r = new Rectangle(c.OriginLeft - root.AbsoluteLeft, c.OriginTop - root.AbsoluteTop, c.OriginWidth, c.OriginHeight);
+
             int x1 = r.Left;
             int x2 = r.Right;
             int y1 = r.Top;
@@ -1012,9 +1114,12 @@ namespace AsteriaClient.Interface.Controls
         private RenderTarget2D CreateRenderTarget(int width, int height)
         {
             if (width > 0 && height > 0)
-                return new RenderTarget2D(Manager.GraphicsDevice, width, height, false, SurfaceFormat.Color, DepthFormat.None,
-                    Manager.GraphicsDevice.PresentationParameters.MultiSampleCount, Manager._RenderTargetUsage);
-
+            {
+                return new RenderTarget2D(Manager.GraphicsDevice,
+                    width, height, false, SurfaceFormat.Color, DepthFormat.None,
+                    Manager.GraphicsDevice.PresentationParameters.MultiSampleCount,
+                    Manager._RenderTargetUsage);
+            }
             return null;
         }
 
@@ -1064,10 +1169,12 @@ namespace AsteriaClient.Interface.Controls
             while (parent != null)
             {
                 if (parent.Detached)
+                {
                     return true;
-
+                }
                 parent = parent.Parent;
             }
+
             return c.Detached;
         }
 
@@ -1142,13 +1249,18 @@ namespace AsteriaClient.Interface.Controls
         {
             if (visible && target != null)
             {
-                renderer.Begin(BlendingMode.Default);
-                renderer.Draw(target, OriginLeft, OriginTop, new Rectangle(0, 0, OriginWidth, OriginHeight), Color.FromNonPremultiplied(255, 255, 255, Alpha));
-                renderer.End();
+                bool draw = true;
 
-                DrawDetached(this, renderer, gameTime);
+                if (draw)
+                {
+                    renderer.Begin(BlendingMode.Default);
+                    renderer.Draw(target, OriginLeft, OriginTop, new Rectangle(0, 0, OriginWidth, OriginHeight), Color.FromNonPremultiplied(255, 255, 255, Alpha));
+                    renderer.End();
 
-                DrawOutline(renderer, false);
+                    DrawDetached(this, renderer, gameTime);
+
+                    DrawOutline(renderer, false);
+                }
             }
         }
 
@@ -1158,7 +1270,9 @@ namespace AsteriaClient.Interface.Controls
             {
                 Rectangle r = OutlineRect;
                 if (child)
+                {
                     r = new Rectangle(OutlineRect.Left + (parent.AbsoluteLeft - root.AbsoluteLeft), OutlineRect.Top + (parent.AbsoluteTop - root.AbsoluteTop), OutlineRect.Width, OutlineRect.Height);
+                }
 
                 Texture2D t = Manager.Skin.Controls["Control.Outline"].Layers[0].Image.Resource;
 
@@ -1181,7 +1295,9 @@ namespace AsteriaClient.Interface.Controls
             {
                 Rectangle r = ControlRect;
                 if (child)
+                {
                     r = new Rectangle(r.Left + (parent.AbsoluteLeft - root.AbsoluteLeft), r.Top + (parent.AbsoluteTop - root.AbsoluteTop), r.Width, r.Height);
+                }
 
                 Texture2D t = Manager.Skin.Controls["Control.Outline"].Layers[0].Image.Resource;
 
@@ -1202,18 +1318,12 @@ namespace AsteriaClient.Interface.Controls
             }
         }
 
-        /// <summary>
-        /// Sets the top and left position of the control.
-        /// </summary>
         public virtual void SetPosition(int left, int top)
         {
             this.left = left;
             this.top = top;
         }
 
-        /// <summary>
-        /// Sets the width and height of the control.
-        /// </summary>
         public virtual void SetSize(int width, int height)
         {
             this.width = width;
@@ -1230,33 +1340,45 @@ namespace AsteriaClient.Interface.Controls
                 anchorMargins.Bottom = Parent.VirtualHeight - Height - Top;
             }
             else
+            {
                 anchorMargins = new Margins();
+            }
         }
 
         private void ProcessAnchor(ResizeEventArgs e)
         {
             if (((Anchor & Anchors.Right) == Anchors.Right) && ((Anchor & Anchors.Left) != Anchors.Left))
+            {
                 Left = Parent.VirtualWidth - Width - anchorMargins.Right;
+            }
             else if (((Anchor & Anchors.Right) == Anchors.Right) && ((Anchor & Anchors.Left) == Anchors.Left))
+            {
                 Width = Parent.VirtualWidth - Left - anchorMargins.Right;
+            }
             else if (((Anchor & Anchors.Right) != Anchors.Right) && ((Anchor & Anchors.Left) != Anchors.Left))
             {
                 int diff = (e.Width - e.OldWidth);
                 if (e.Width % 2 != 0 && diff != 0)
+                {
                     diff += (diff / Math.Abs(diff));
-
+                }
                 Left += (diff / 2);
             }
             if (((Anchor & Anchors.Bottom) == Anchors.Bottom) && ((Anchor & Anchors.Top) != Anchors.Top))
+            {
                 Top = Parent.VirtualHeight - Height - anchorMargins.Bottom;
+            }
             else if (((Anchor & Anchors.Bottom) == Anchors.Bottom) && ((Anchor & Anchors.Top) == Anchors.Top))
+            {
                 Height = Parent.VirtualHeight - Top - anchorMargins.Bottom;
+            }
             else if (((Anchor & Anchors.Bottom) != Anchors.Bottom) && ((Anchor & Anchors.Top) != Anchors.Top))
             {
                 int diff = (e.Height - e.OldHeight);
                 if (e.Height % 2 != 0 && diff != 0)
+                {
                     diff += (diff / Math.Abs(diff));
-
+                }
                 Top += (diff / 2);
             }
         }
@@ -1280,7 +1402,9 @@ namespace AsteriaClient.Interface.Controls
                 else Skin = new SkinControl(Manager.Skin.Controls["Control"]);
             }
             else
+            {
                 throw new Exception("Control skin cannot be initialized. No skin loaded.");
+            }
         }
 
         protected virtual void SetDefaultSize(int width, int height)
@@ -1302,20 +1426,24 @@ namespace AsteriaClient.Interface.Controls
         protected internal void OnDeviceSettingsChanged(DeviceEventArgs e)
         {
             if (!e.Handled)
+            {
                 Invalidate();
+            }
         }
 
         protected virtual void DrawControl(Renderer renderer, Rectangle rect, GameTime gameTime)
         {
             if (backColor != UndefinedColor && backColor != Color.Transparent)
+            {
                 renderer.Draw(Manager.Skin.Images["Control"].Resource, rect, backColor);
-
+            }
             renderer.DrawLayer(this, skin.Layers[0], rect);
         }
 
         protected internal override void Update(GameTime gameTime)
         {
             base.Update(gameTime);
+
             ToolTipUpdate();
 
             if (controls != null)
@@ -1323,20 +1451,26 @@ namespace AsteriaClient.Interface.Controls
                 ControlList list = new ControlList();
                 list.AddRange(controls);
                 foreach (Control c in list)
+                {
                     c.Update(gameTime);
+                }
             }
         }
 
         protected internal virtual void CheckLayer(SkinControl skin, string layer)
         {
             if (!(skin != null && skin.Layers != null && skin.Layers.Count > 0 && skin.Layers[layer] != null))
+            {
                 throw new Exception("Unable to read skin layer \"" + layer + "\" for control \"" + Utilities.DeriveControlName(this) + "\".");
+            }
         }
 
         protected internal virtual void CheckLayer(SkinControl skin, int layer)
         {
             if (!(skin != null && skin.Layers != null && skin.Layers.Count > 0 && skin.Layers[layer] != null))
+            {
                 throw new Exception("Unable to read skin layer with index \"" + layer.ToString() + "\" for control \"" + Utilities.DeriveControlName(this) + "\".");
+            }
         }
         #endregion
 
@@ -1360,9 +1494,6 @@ namespace AsteriaClient.Interface.Controls
             return ret;
         }
 
-        /// <summary>
-        /// Adds the specified control as a child.
-        /// </summary>
         public virtual void Add(Control control)
         {
             if (control != null)
@@ -1393,9 +1524,6 @@ namespace AsteriaClient.Interface.Controls
             }
         }
 
-        /// <summary>
-        /// Removed the specified control.
-        /// </summary>
         public virtual void Remove(Control control)
         {
             if (control != null)
@@ -1537,6 +1665,7 @@ namespace AsteriaClient.Interface.Controls
         private void KeyDownProcess(KeyEventArgs e)
         {
             Invalidate();
+
             ToolTipOut();
 
             if (e.Key == Microsoft.Xna.Framework.Input.Keys.Space && !IsPressed)
@@ -1659,6 +1788,7 @@ namespace AsteriaClient.Interface.Controls
             ToolTipOut();
 
             Manager.Cursor = Manager.Skin.Cursors["Default"].Resource;
+
             if (!Suspended) OnMouseOut(e);
         }
 
@@ -1706,16 +1836,17 @@ namespace AsteriaClient.Interface.Controls
                 }
             }
 
-            if (!Suspended)
-                OnMouseMove(TransformPosition(e));
+            if (!Suspended) OnMouseMove(TransformPosition(e));
         }
 
         private void ClickProcess(EventArgs e)
         {
             long timer = (long)TimeSpan.FromTicks(DateTime.Now.Ticks).TotalMilliseconds;
+
             MouseEventArgs ex = (e is MouseEventArgs) ? (MouseEventArgs)e : new MouseEventArgs();
 
-            if ((doubleClickTimer == 0 || (timer - doubleClickTimer > Manager.DoubleClickTime)) || !doubleClicks)
+            if ((doubleClickTimer == 0 || (timer - doubleClickTimer > Manager.DoubleClickTime)) ||
+                !doubleClicks)
             {
                 TimeSpan ts = new TimeSpan(DateTime.Now.Ticks);
                 doubleClickTimer = (long)ts.TotalMilliseconds;
@@ -1779,8 +1910,11 @@ namespace AsteriaClient.Interface.Controls
             if (movable)
             {
                 Rectangle rect = movableArea;
+
                 if (rect == Rectangle.Empty)
+                {
                     rect = new Rectangle(0, 0, width, height);
+                }
 
                 pos.X -= AbsoluteLeft;
                 pos.Y -= AbsoluteTop;
@@ -1877,17 +2011,21 @@ namespace AsteriaClient.Interface.Controls
                     bool left = false;
                     bool right = false;
 
-                    if ((resizeArea == Alignment.TopCenter || resizeArea == Alignment.TopLeft || resizeArea == Alignment.TopRight) && (resizeEdge & Anchors.Top) == Anchors.Top)
-                        top = true;
+                    if ((resizeArea == Alignment.TopCenter ||
+                        resizeArea == Alignment.TopLeft ||
+                        resizeArea == Alignment.TopRight) && (resizeEdge & Anchors.Top) == Anchors.Top) top = true;
 
-                    else if ((resizeArea == Alignment.BottomCenter || resizeArea == Alignment.BottomLeft || resizeArea == Alignment.BottomRight) && (resizeEdge & Anchors.Bottom) == Anchors.Bottom)
-                        bottom = true;
+                    else if ((resizeArea == Alignment.BottomCenter ||
+                             resizeArea == Alignment.BottomLeft ||
+                             resizeArea == Alignment.BottomRight) && (resizeEdge & Anchors.Bottom) == Anchors.Bottom) bottom = true;
 
-                    if ((resizeArea == Alignment.MiddleLeft || resizeArea == Alignment.BottomLeft || resizeArea == Alignment.TopLeft) && (resizeEdge & Anchors.Left) == Anchors.Left)
-                        left = true;
+                    if ((resizeArea == Alignment.MiddleLeft ||
+                        resizeArea == Alignment.BottomLeft ||
+                        resizeArea == Alignment.TopLeft) && (resizeEdge & Anchors.Left) == Anchors.Left) left = true;
 
-                    else if ((resizeArea == Alignment.MiddleRight || resizeArea == Alignment.BottomRight || resizeArea == Alignment.TopRight) && (resizeEdge & Anchors.Right) == Anchors.Right)
-                        right = true;
+                    else if ((resizeArea == Alignment.MiddleRight ||
+                             resizeArea == Alignment.BottomRight ||
+                             resizeArea == Alignment.TopRight) && (resizeEdge & Anchors.Right) == Anchors.Right) right = true;
 
                     int w = Width;
                     int h = Height;
@@ -1909,7 +2047,6 @@ namespace AsteriaClient.Interface.Controls
                     {
                         w = w + (l - px) + leftModifier + pressDiff[0];
                         l = px - leftModifier - pressDiff[0] - CheckWidth(ref w);
-
                     }
                     else if (right)
                     {
@@ -2029,9 +2166,7 @@ namespace AsteriaClient.Interface.Controls
                 else if (b) resizeArea = Alignment.BottomCenter;
             }
             else
-            {
                 resizeArea = Alignment.None;
-            }
         }
         #endregion
 

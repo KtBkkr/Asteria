@@ -579,10 +579,7 @@ namespace AsteriaClient.Interface.Controls
             int h = e.GraphicsDeviceInformation.PresentationParameters.BackBufferHeight;
 
             foreach (Control c in Controls)
-            {
                 SetMaxSize(c, w, h);
-            }
-
 
             if (DeviceSettingsChanged != null) DeviceSettingsChanged.Invoke(new DeviceEventArgs(e));
         }
@@ -601,9 +598,7 @@ namespace AsteriaClient.Interface.Controls
             }
 
             foreach (Control cx in c.Controls)
-            {
                 SetMaxSize(cx, w, h);
-            }
         }
 
         /// <summary>

@@ -21,7 +21,7 @@ namespace AsteriaClient.Interface.Controls
         private ToolBarPanel toolBarPanel;
         private StatusBar statusBar;
         private bool autoScroll = false;
-        private Control defaultControl = null; 
+        private Control defaultControl = null;
         #endregion
 
         #region Properties
@@ -112,10 +112,7 @@ namespace AsteriaClient.Interface.Controls
 
         public virtual StatusBar StatusBar
         {
-            get
-            {
-                return statusBar;
-            }
+            get { return statusBar; }
             set
             {
                 if (statusBar != null)

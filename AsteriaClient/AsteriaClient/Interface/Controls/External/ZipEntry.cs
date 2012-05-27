@@ -347,13 +347,13 @@ namespace AsteriaClient.Interface.Controls.External
 
                         if (_Debug)
                         {
-                            Console.WriteLine("{0}: _FileData.Length= {1}", TargetFile, _FileData.Length);
-                            Console.WriteLine("{0}: memstream.Position: {1}", TargetFile, memstream.Position);
+                            System.Console.WriteLine("{0}: _FileData.Length= {1}", TargetFile, _FileData.Length);
+                            System.Console.WriteLine("{0}: memstream.Position: {1}", TargetFile, memstream.Position);
                             n = _FileData.Length;
                             if (n > 1000)
                             {
                                 n = 500;
-                                Console.WriteLine("{0}: truncating dump from {1} to {2} bytes...", TargetFile, _FileData.Length, n);
+                                System.Console.WriteLine("{0}: truncating dump from {1} to {2} bytes...", TargetFile, _FileData.Length, n);
                             }
                             for (int j = 0; j < n; j += 2)
                             {
@@ -369,12 +369,12 @@ namespace AsteriaClient.Interface.Controls.External
                         n = 1; // anything non-zero
                         while (n != 0)
                         {
-                            if (_Debug) Console.WriteLine("{0}: about to read...", TargetFile);
+                            if (_Debug) System.Console.WriteLine("{0}: about to read...", TargetFile);
                             n = input.Read(bytes, 0, bytes.Length);
-                            if (_Debug) Console.WriteLine("{0}: got {1} bytes", TargetFile, n);
+                            if (_Debug) System.Console.WriteLine("{0}: got {1} bytes", TargetFile, n);
                             if (n > 0)
                             {
-                                if (_Debug) Console.WriteLine("{0}: about to write...", TargetFile);
+                                if (_Debug) System.Console.WriteLine("{0}: about to write...", TargetFile);
                                 output.Write(bytes, 0, n);
                             }
                         }
@@ -666,15 +666,15 @@ namespace AsteriaClient.Interface.Controls.External
 
             if (_Debug)
             {
-                Console.WriteLine("{0}: writing compressed data to zipfile...", FileName);
-                Console.WriteLine("{0}: total data length: {1}", FileName, _UnderlyingMemoryStream.Length);
+                System.Console.WriteLine("{0}: writing compressed data to zipfile...", FileName);
+                System.Console.WriteLine("{0}: total data length: {1}", FileName, _UnderlyingMemoryStream.Length);
             }
             while ((n = _UnderlyingMemoryStream.Read(bytes, 0, bytes.Length)) != 0)
             {
 
                 if (_Debug)
                 {
-                    Console.WriteLine("{0}: transferring {1} bytes...", FileName, n);
+                    System.Console.WriteLine("{0}: transferring {1} bytes...", FileName, n);
 
                     for (int j = 0; j < n; j += 2)
                     {

@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TomShane.Neoforce.Controls;
+using AsteriaClient.Interface.Controls;
 using Microsoft.Xna.Framework;
 
 namespace AsteriaClient.Interface
@@ -15,6 +15,7 @@ namespace AsteriaClient.Interface
         public Manager manager;
 
         private GuiConsole console;
+        private Window test;
         #endregion
 
         #region Properties
@@ -40,6 +41,10 @@ namespace AsteriaClient.Interface
         private void InitInterface()
         {
             console = new GuiConsole(manager, false);
+
+            test = new Window(manager);
+            test.Init();
+            manager.Add(test);
         }
 
         public void Update(GameTime gameTime)

@@ -1,0 +1,3 @@
+ECHO Building Skin Files...
+
+7za.exe a -tzip -mx9 -r -x!Addons "Default.skin" ".\Content\*.*"

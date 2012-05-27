@@ -88,7 +88,7 @@ namespace AsteriaClient.Interface.Controls.External
         {
             ZipEntry ze = ZipEntry.Create(FileName);
             ze.TrimVolumeFromFullyQualifiedPaths= TrimVolumeFromFullyQualifiedPaths;
-            if (WantVerbose) Console.WriteLine("adding {0}...", FileName);
+            if (WantVerbose) System.Console.WriteLine("adding {0}...", FileName);
 			ze.Write(WriteStream);
             _entries.Add(ze);
         }
@@ -103,7 +103,7 @@ namespace AsteriaClient.Interface.Controls.External
             String[] filenames = System.IO.Directory.GetFiles(DirectoryName);
             foreach (String filename in filenames)
             {
-                if (WantVerbose) Console.WriteLine("adding {0}...", filename);
+                if (WantVerbose) System.Console.WriteLine("adding {0}...", filename);
                 AddFile(filename);
             }
         }

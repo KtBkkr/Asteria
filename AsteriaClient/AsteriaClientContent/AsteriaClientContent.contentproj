@@ -58,12 +58,15 @@
   <ItemGroup>
     <None Include="Skins\Default.skin">
       <Name>Default</Name>
+      <Importer>SkinImporter</Importer>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Skins\Green.skin">
-      <Name>Green</Name>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AsteriaImporters\AsteriaImporters.csproj">
+      <Project>{B87CC2D0-FFA7-4415-AE7B-C86BC6C2D0D4}</Project>
+      <Name>AsteriaImporters</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\XNA Game Studio\$(XnaFrameworkVersion)\Microsoft.Xna.GameStudio.ContentPipeline.targets" />
   <!--  To modify your build process, add your task inside one of the targets below and uncomment it. 

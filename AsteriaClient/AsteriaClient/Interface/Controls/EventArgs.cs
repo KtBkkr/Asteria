@@ -180,4 +180,20 @@ namespace AsteriaClient.Interface.Controls
         public WindowClosedEventArgs() { }
         #endregion
     }
+
+    public class ConsoleMessageEventArgs : EventArgs
+    {
+        #region Fields
+        public ConsoleMessage Message;
+        #endregion
+
+        #region Constructors
+        public ConsoleMessageEventArgs() { }
+
+        public ConsoleMessageEventArgs(ConsoleMessage message)
+        {
+            Message = message;
+        }
+        #endregion
+    }
 }

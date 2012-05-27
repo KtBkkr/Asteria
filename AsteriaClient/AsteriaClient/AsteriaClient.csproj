@@ -106,8 +106,7 @@
     <Reference Include="System.Net">
       <Private>False</Private>
     </Reference>
-    <Reference Include="TomShane.Neoforce.Controls, Version=0.7.2407.1915, Culture=neutral, processorArchitecture=x86">
-      <SpecificVersion>False</SpecificVersion>
+    <Reference Include="TomShane.Neoforce.Controls">
       <HintPath>..\..\References\TomShane.Neoforce.Controls.dll</HintPath>
     </Reference>
   </ItemGroup>
@@ -121,14 +120,17 @@
     <Compile Include="Interface\Controls\ClipControl.cs" />
     <Compile Include="Interface\Controls\ComboBox.cs" />
     <Compile Include="Interface\Controls\Component.cs" />
+    <Compile Include="Interface\Controls\Console.cs" />
     <Compile Include="Interface\Controls\Container.cs" />
     <Compile Include="Interface\Controls\ContentReaders.cs" />
     <Compile Include="Interface\Controls\ContextMenu.cs" />
     <Compile Include="Interface\Controls\Control.cs" />
     <Compile Include="Interface\Controls\Delegates.cs" />
+    <Compile Include="Interface\Controls\Dialog.cs" />
     <Compile Include="Interface\Controls\Disposable.cs" />
     <Compile Include="Interface\Controls\EventArgs.cs" />
     <Compile Include="Interface\Controls\EventedList.cs" />
+    <Compile Include="Interface\Controls\ExitDialog.cs" />
     <Compile Include="Interface\Controls\External\Crc32.cs" />
     <Compile Include="Interface\Controls\External\Shared.cs" />
     <Compile Include="Interface\Controls\External\ZipDirEntry.cs" />
@@ -136,6 +138,7 @@
     <Compile Include="Interface\Controls\External\ZipFile.cs" />
     <Compile Include="Interface\Controls\GroupBox.cs" />
     <Compile Include="Interface\Controls\GroupPanel.cs" />
+    <Compile Include="Interface\Controls\ImageBox.cs" />
     <Compile Include="Interface\Controls\InputSystem.cs" />
     <Compile Include="Interface\Controls\KeyboardLayout.cs" />
     <Compile Include="Interface\Controls\Label.cs" />
@@ -146,16 +149,23 @@
     <Compile Include="Interface\Controls\ModalContainer.cs" />
     <Compile Include="Interface\Controls\NativeMethods.cs" />
     <Compile Include="Interface\Controls\Panel.cs" />
+    <Compile Include="Interface\Controls\ProgressBar.cs" />
+    <Compile Include="Interface\Controls\RadioButton.cs" />
     <Compile Include="Interface\Controls\Renderer.cs" />
     <Compile Include="Interface\Controls\ScrollBar.cs" />
+    <Compile Include="Interface\Controls\SideBar.cs" />
+    <Compile Include="Interface\Controls\SideBarPanel.cs" />
     <Compile Include="Interface\Controls\Skin.cs" />
     <Compile Include="Interface\Controls\SpinBox.cs" />
+    <Compile Include="Interface\Controls\StackPanel.cs" />
     <Compile Include="Interface\Controls\StatusBar.cs" />
+    <Compile Include="Interface\Controls\TabControl.cs" />
     <Compile Include="Interface\Controls\TextBox.cs" />
     <Compile Include="Interface\Controls\ToolBar.cs" />
     <Compile Include="Interface\Controls\ToolBarButton.cs" />
     <Compile Include="Interface\Controls\ToolBarPanel.cs" />
     <Compile Include="Interface\Controls\ToolTip.cs" />
+    <Compile Include="Interface\Controls\TrackBar.cs" />
     <Compile Include="Interface\Controls\Types.cs" />
     <Compile Include="Interface\Controls\Unknown.cs" />
     <Compile Include="Interface\Controls\Utilities.cs" />
@@ -176,8 +186,9 @@
       <Name>AsteriaLibrary</Name>
     </ProjectReference>
     <ProjectReference Include="..\AsteriaClientContent\AsteriaClientContent.contentproj">
-      <Name>AsteriaClientContent</Name>
+      <Name>AsteriaClientContent %28Content%29</Name>
       <XnaReferenceType>Content</XnaReferenceType>
+      <Project>{E8633525-48A4-4F1E-8B53-9CA4EBE672BF}</Project>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

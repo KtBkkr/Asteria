@@ -89,10 +89,10 @@ namespace AsteriaClient.Interface.Controls.External
             try { d = new System.DateTime(year, month, day, hour, minute, second, 0); }
             catch
             {
-                Console.Write("\nInvalid date/time?:\nyear: {0} ", year);
-                Console.Write("month: {0} ", month);
-                Console.WriteLine("day: {0} ", day);
-                Console.WriteLine("HH:MM:SS= {0}:{1}:{2}", hour, minute, second);
+                System.Console.Write("\nInvalid date/time?:\nyear: {0} ", year);
+                System.Console.Write("month: {0} ", month);
+                System.Console.WriteLine("day: {0} ", day);
+                System.Console.WriteLine("HH:MM:SS= {0}:{1}:{2}", hour, minute, second);
             }
 
             return d;

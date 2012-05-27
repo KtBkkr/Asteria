@@ -11,7 +11,6 @@ using AsteriaLibrary.Shared;
 using AsteriaLibrary.Client;
 using AsteriaLibrary.Entities;
 using AsteriaLibrary.Messages;
-using Neoforce = TomShane.Neoforce.Controls;
 using AsteriaClient.Interface;
 
 namespace AsteriaClient

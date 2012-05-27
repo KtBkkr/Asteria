@@ -129,7 +129,7 @@ namespace AsteriaClient.Interface.Controls
             Add(btnClose, false);
 
             oldAlpha = Alpha;
-        }   
+        }
         #endregion
 
         #region Methods

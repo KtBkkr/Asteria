@@ -46,12 +46,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Client\LoginClient.cs" />
-    <Compile Include="Client\LoginClientBase.cs" />
-    <Compile Include="Client\LoginConnection.cs" />
-    <Compile Include="Client\WorldClient.cs" />
-    <Compile Include="Client\WorldClientBase.cs" />
-    <Compile Include="Client\WorldConnection.cs" />
+    <Compile Include="Zones\Client\LoginClient.cs" />
+    <Compile Include="Zones\Client\LoginClientBase.cs" />
+    <Compile Include="Zones\Client\LoginConnection.cs" />
+    <Compile Include="Zones\Client\WorldClient.cs" />
+    <Compile Include="Zones\Client\WorldClientBase.cs" />
+    <Compile Include="Zones\Client\WorldConnection.cs" />
     <Compile Include="Data\LinkedList.cs" />
     <Compile Include="Data\LinkedNode.cs" />
     <Compile Include="Data\ObjectPool.cs" />

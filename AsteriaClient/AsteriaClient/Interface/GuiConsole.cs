@@ -2,25 +2,26 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using AsteriaClient.Interface.Controls;
 using Microsoft.Xna.Framework;
-using Neoforce = TomShane.Neoforce.Controls;
+using Controls = AsteriaClient.Interface.Controls;
 
 namespace AsteriaClient.Interface
 {
     class GuiConsole
     {
         #region Variables
-        private Neoforce.Manager manager;
-        private Neoforce.TabControl tabControl;
-        private Dictionary<Neoforce.TabPage, Neoforce.Console> consoles;
-        private Neoforce.ChannelList channels;
+        private Manager manager;
+        private TabControl tabControl;
+        private Dictionary<TabPage, Controls.Console> consoles;
+        private ChannelList channels;
         #endregion
 
         #region Properties
         /// <summary>
         /// Returns the currently selected tab.
         /// </summary>
-        public Neoforce.TabPage CurrentTab
+        public TabPage CurrentTab
         {
             get { return tabControl.SelectedPage; }
         }
@@ -28,31 +29,32 @@ namespace AsteriaClient.Interface
         /// <summary>
         /// Returns the console of the current tab.
         /// </summary>
-        public Neoforce.Console CurrentConsole
+        public Controls.Console CurrentConsole
         {
-            get { return tabControl.SelectedPage.GetControl("console") as Neoforce.Console; }
+            get { return tabControl.SelectedPage.GetControl("console") as Controls.Console; }
         }
 
         /// <summary>
         /// Returns the channel list.
         /// </summary>
-        public Neoforce.ChannelList Channels
+        public ChannelList Channels
         {
             get { return channels; }
         }
         #endregion
 
         #region Constructors
-        public GuiConsole(Neoforce.Manager manager, bool debug)
+        public GuiConsole(Manager manager, bool debug)
         {
             // TODO: [MID] create a more modular console with custom methods to manage it.
             // TODO: [MID] rewrite how channels work ie. make it possible for hidden channels.
+            // TODO: [LOW] implement input history with up arrow to send previous messages.
 
             this.manager = manager;
 
-            tabControl = new Neoforce.TabControl(manager);
-            consoles = new Dictionary<Neoforce.TabPage, Neoforce.Console>();
-            channels = new Neoforce.ChannelList();
+            tabControl = new TabControl(manager);
+            consoles = new Dictionary<TabPage, Controls.Console>();
+            channels = new ChannelList();
 
             tabControl.Init();
             tabControl.Top = 200;
@@ -63,14 +65,15 @@ namespace AsteriaClient.Interface
             tabControl.Resizable = true;
             tabControl.MinimumHeight = 96;
             tabControl.MinimumWidth = 160;
+            tabControl.Anchor = Anchors.Horizontal | Anchors.Bottom;
             manager.Add(tabControl);
 
             AddChannel(0, "System", Color.DarkOrange, false);
             AddChannel(1, "User", Color.White, false);
             AddChannel(2, "General", Color.LightBlue, true);
 
-            AddConsole("Global", 2, Neoforce.ConsoleMessageFormats.All, MessageSent, true, "Welcome to Asteria!");
-            AddConsole("Debug", 1, Neoforce.ConsoleMessageFormats.ChannelName, MessageSent, false);
+            AddConsole("Global", 2, ConsoleMessageFormats.All, MessageSent, true, "Welcome to Asteria!");
+            AddConsole("Debug", 1, ConsoleMessageFormats.ChannelName, MessageSent, false);
         }
         #endregion
 
@@ -78,9 +81,9 @@ namespace AsteriaClient.Interface
         /// <summary>
         /// Iterates through the tab pages to find the one with the specified name.
         /// </summary>
-        public Neoforce.TabPage FindConsoleTab(string name)
+        public TabPage FindConsoleTab(string name)
         {
-            foreach (Neoforce.TabPage page in tabControl.TabPages)
+            foreach (TabPage page in tabControl.TabPages)
             {
                 if (page.Name.ToLower() == name.ToLower())
                     return page;
@@ -91,29 +94,29 @@ namespace AsteriaClient.Interface
         /// <summary>
         /// Creates a tab page and embeds a console with the specified parameters.
         /// </summary>
-        public void AddConsole(string name, byte selected, Neoforce.ConsoleMessageFormats format,
-            Neoforce.ConsoleMessageEventHandler handler, bool showChannels, string motd)
+        public void AddConsole(string name, byte selected, ConsoleMessageFormats format,
+            ConsoleMessageEventHandler handler, bool showChannels, string motd)
         {
             // Create tab as usual.
             AddConsole(name, selected, format, handler, showChannels);
 
             // Add specified message of the day.
-            Neoforce.TabPage tab = FindConsoleTab(name);
+            TabPage tab = FindConsoleTab(name);
             if (tab != null)
-                consoles[tab].MessageBuffer.Add(new Neoforce.ConsoleMessage(motd, 0));
+                consoles[tab].MessageBuffer.Add(new ConsoleMessage(motd, 0));
         }
 
         /// <summary>
         /// Creates a tab page and embeds a console with the specified parameters.
         /// </summary>
-        public void AddConsole(string name, byte selected, Neoforce.ConsoleMessageFormats format,
-            Neoforce.ConsoleMessageEventHandler handler, bool showChannels)
+        public void AddConsole(string name, byte selected, ConsoleMessageFormats format,
+            ConsoleMessageEventHandler handler, bool showChannels)
         {
             // Create a new tab page and a new console.
-            Neoforce.TabPage tab = tabControl.AddPage(name);
+            TabPage tab = tabControl.AddPage(name);
             tab.Name = name;
             //tab.Name = name;
-            consoles.Add(tab, new Neoforce.Console(manager));
+            consoles.Add(tab, new Controls.Console(manager));
 
             consoles[tab].Init();
             consoles[tab].Name = "console";
@@ -122,7 +125,7 @@ namespace AsteriaClient.Interface
             tab.Add(consoles[tab]);
             consoles[tab].Width = tab.ClientWidth;
             consoles[tab].Height = tab.ClientHeight;
-            consoles[tab].Anchor = Neoforce.Anchors.All;
+            consoles[tab].Anchor = Anchors.All;
             consoles[tab].Channels = channels;
             consoles[tab].SelectedChannel = selected;
             consoles[tab].ChannelsVisible = showChannels;
@@ -135,7 +138,7 @@ namespace AsteriaClient.Interface
         /// </summary>
         public void RemoveConsole(string name)
         {
-            Neoforce.TabPage page = FindConsoleTab(name);
+            TabPage page = FindConsoleTab(name);
             if (page != null)
                 tabControl.RemovePage(page, true);
         }
@@ -146,7 +149,7 @@ namespace AsteriaClient.Interface
         public void AddChannel(byte index, string name, Color color, bool visible)
         {
             // TODO: [LOW] create a better way to manage channel indexes.
-            channels.Add(new Neoforce.ConsoleChannel(index, name, color, visible));
+            channels.Add(new ConsoleChannel(index, name, color, visible));
         }
 
         /// <summary>
@@ -155,8 +158,8 @@ namespace AsteriaClient.Interface
         public void RemoveChannel(string name)
         {
             // TODO: [LOW] find a cleaner way to do this.
-            Neoforce.ConsoleChannel remove = null;
-            foreach (Neoforce.ConsoleChannel chan in channels)
+            ConsoleChannel remove = null;
+            foreach (ConsoleChannel chan in channels)
             {
                 if (chan.Name.ToLower() == name.ToLower())
                     remove = chan;
@@ -171,9 +174,9 @@ namespace AsteriaClient.Interface
         /// </summary>
         public void AddMessage(byte channel, string console, string message)
         {
-            Neoforce.TabPage tab = FindConsoleTab(console);
+            TabPage tab = FindConsoleTab(console);
             if (tab != null)
-                consoles[tab].MessageBuffer.Add(new Neoforce.ConsoleMessage(message, channel));
+                consoles[tab].MessageBuffer.Add(new ConsoleMessage(message, channel));
         }
 
         /// <summary>
@@ -182,9 +185,9 @@ namespace AsteriaClient.Interface
         public void AddMessage(byte channel, string console, string message, params object[] args)
         {
             string msg = String.Format(message, args);
-            Neoforce.TabPage tab = FindConsoleTab(console);
+            TabPage tab = FindConsoleTab(console);
             if (tab != null)
-                consoles[tab].MessageBuffer.Add(new Neoforce.ConsoleMessage(msg, channel));
+                consoles[tab].MessageBuffer.Add(new ConsoleMessage(msg, channel));
         }
 
         /// <summary>
@@ -193,7 +196,7 @@ namespace AsteriaClient.Interface
         public void AddMessage(byte channel, string message, params object[] args)
         {
             string msg = String.Format(message, args);
-            CurrentConsole.MessageBuffer.Add(new Neoforce.ConsoleMessage(msg, channel));
+            CurrentConsole.MessageBuffer.Add(new ConsoleMessage(msg, channel));
         }
 
         /// <summary>
@@ -201,10 +204,10 @@ namespace AsteriaClient.Interface
         /// </summary>
         public void AddMessage(byte channel, string message)
         {
-            CurrentConsole.MessageBuffer.Add(new Neoforce.ConsoleMessage(message, channel));
+            CurrentConsole.MessageBuffer.Add(new ConsoleMessage(message, channel));
         }
 
-        void MessageSent(object sender, Neoforce.ConsoleMessageEventArgs e)
+        void MessageSent(object sender, ConsoleMessageEventArgs e)
         {
             string message = e.Message.Text;
             if (message.StartsWith("/"))
@@ -221,7 +224,7 @@ namespace AsteriaClient.Interface
 
                     case "channels":
                         string chans = "Channels: ";
-                        foreach (Neoforce.ConsoleChannel chan in channels)
+                        foreach (ConsoleChannel chan in channels)
                             chans += String.Format("{0}({1}), ", chan.Name.ToString(), chan.Visible);
 
                         AddMessage(0, chans);
