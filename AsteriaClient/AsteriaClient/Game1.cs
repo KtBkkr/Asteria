@@ -12,14 +12,10 @@ using AsteriaLibrary.Client;
 using AsteriaLibrary.Entities;
 using AsteriaLibrary.Messages;
 using AsteriaClient.Interface;
+using AsteriaClient.Interface.Controls;
 
 namespace AsteriaClient
 {
-    delegate void FillCharacterListDelegate();
-    delegate void DisplayWorldMessageDelegate();
-    delegate void LogMessageDelegate();
-    delegate void StateChangedDelegate();
-
     /// <summary>
     /// This is the main type for your game
     /// </summary>
@@ -35,15 +31,10 @@ namespace AsteriaClient
         public static long Frames = 0;
 
         private Texture2D background;
-        private Gui gameInterface;
+        private GameInterface gameInterface;
 
         private string protocolVersion;
         private Logger logger;
-
-        private FillCharacterListDelegate fillCharacterList;
-        private DisplayWorldMessageDelegate displayMessage;
-        private LogMessageDelegate logMessage;
-        private StateChangedDelegate stateChanged;
 
         private WorldConnection connection;
         private Character playerCharacter;
@@ -72,13 +63,16 @@ namespace AsteriaClient
             Window.Title = "Asteria";
             IsMouseVisible = true;
 
-            graphics.PreferredBackBufferWidth = 1024;
-            graphics.PreferredBackBufferHeight = 768;
+            graphics.PreferredBackBufferWidth = 1440;
+            graphics.PreferredBackBufferHeight = 900;
             graphics.IsFullScreen = false;
 
             graphics.ApplyChanges();
 
-            gameInterface = new Gui(this);
+            gameInterface = new GameInterface(this);
+            gameInterface.CreateCharacter += new CreateCharacterHandler(CreateCharacter);
+            gameInterface.DeleteCharacter += new DeleteCharacterHandler(DeleteCharacter);
+            gameInterface.StartCharacter += new StartCharacterHandler(StartCharacter);
 
             protocolVersion = "0.1";
             logger = new Logger("Asteria.log");
@@ -90,7 +84,7 @@ namespace AsteriaClient
             connection.CharManagementMessageReceived += new WorldClientMsgEvent(HandleCharMngtMessageReceived);
             connection.AccountId = 2;
 
-            //connection.ConnectToWorld("admin_testing");
+            connection.ConnectToWorld("admin_testing");
 
             worldEntities = new Dictionary<int, Entity>();
 
@@ -161,7 +155,7 @@ namespace AsteriaClient
         /// <param name="message"></param>
         private void ToLog(string message)
         {
-            gameInterface.Console.AddMessage(0, "debug", message);
+            gameInterface.Console.MessageBuffer.Add(new ConsoleMessage(message, 3));
         }
 
         private void HandleStateChanged(WorldConnection.WorldConnectionState state)
@@ -178,7 +172,7 @@ namespace AsteriaClient
             }
             else if (connection.State == WorldConnection.WorldConnectionState.CharacterManagement)
             {
-                //FillCharacterList();
+                FillCharacterList();
             }
             else if (connection.State == WorldConnection.WorldConnectionState.InGame)
             {
@@ -198,7 +192,7 @@ namespace AsteriaClient
             }
             else if (messageType == MessageType.S2C_CharacterList)
             {
-                //FillCharacterList();
+                FillCharacterList();
             }
         }
 
@@ -255,6 +249,48 @@ namespace AsteriaClient
                     break;
             }
             Logger.Output(this, "HandleZoneMessage() type {0}", a);
+        }
+
+        /// <summary>
+        /// Fills the list box with player characters created on the connected world server.
+        /// </summary>
+        /// <returns></returns>
+        private void FillCharacterList()
+        {
+            gameInterface.charsList.Items.Clear();
+
+            foreach (Character achar in connection.CharacterList)
+            {
+                if (achar.AccountId > 0 && achar.CharacterId > 0)
+                    gameInterface.charsList.Items.Add(String.Format("ID:{0} - LVL:{1} - CLASS:{2} - NAME:{3}",
+                        achar.CharacterId, achar.GetAttributeValue("level"), achar.GetPropertyValue("class"), achar.Name));
+                else
+                    Logger.Output(this, "Received invalid character list data!");
+            }
+        }
+
+        private void CreateCharacter(CharacterMgtEventArgs e)
+        {
+            if (connection.CharacterAdd("1|" + e.Name))
+                return;
+
+            Logger.Output(this, "Character could not be created!");
+        }
+
+        private void DeleteCharacter(CharacterMgtEventArgs e)
+        {
+            if (connection.CharacterDelete(e.Id))
+                return;
+
+            Logger.Output(this, "Character could not be deleted!");
+        }
+
+        private void StartCharacter(CharacterMgtEventArgs e)
+        {
+            if (connection.CharacterStart(e.Id))
+                return;
+
+            Logger.Output(this, "Character could not be started!");
         }
         #endregion
     }

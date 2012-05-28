@@ -65,7 +65,6 @@ namespace AsteriaClient.Interface
             tabControl.Resizable = true;
             tabControl.MinimumHeight = 96;
             tabControl.MinimumWidth = 160;
-            tabControl.Anchor = Anchors.Horizontal | Anchors.Bottom;
             manager.Add(tabControl);
 
             AddChannel(0, "System", Color.DarkOrange, false);

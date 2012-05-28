@@ -332,7 +332,7 @@ namespace AsteriaClient.Interface.Controls
                     for (int i = s - 1; i >= f; i--)
                     {
                         {
-                            int x = 4;
+                            int x = r.Left + 4;
                             int y = r.Bottom - (pos + 1) * ((int)font.LineSpacing + 0);
 
                             string msg = ((ConsoleMessage)b[i]).Text;

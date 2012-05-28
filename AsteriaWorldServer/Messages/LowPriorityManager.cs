@@ -9,6 +9,7 @@ using AsteriaLibrary.Shared;
 using AsteriaWorldServer.Messages;
 using AsteriaWorldServer.PlayerCache;
 using Lidgren.Network;
+using AsteriaLibrary.Entities;
 
 namespace AsteriaWorldServer.Messages
 {
@@ -110,7 +111,9 @@ namespace AsteriaWorldServer.Messages
 
         private void HandleChat(ClientToServerMessage msg)
         {
-            // TODO: [HIGH]
+            ServerToClientMessage wm = ServerToClientMessage.CreateMessageSafe(msg.Sender);
+            MessageFormatter.CreateChatMessage(msg.Sender.RemoteEndpoint.ToString(), msg.Data, wm);
+            QueueManager.WorldMessageQueueReadWrite = wm;
         }
 
         /// <summary>

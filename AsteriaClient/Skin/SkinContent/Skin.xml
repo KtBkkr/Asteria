@@ -842,6 +842,19 @@
     </Control>
     ////////////////////////////////////////////////////////////////////////////
 
+    //// BottomBar ///////////////////////////////////////////////////////////////
+    <Control Name="BottomBar" Inherits="Control">
+      <Layers>
+        <Layer Name="Control" Image="BottomBar" Width="8" Height="8">
+          <SizingMargins Left="0" Top="0" Right="2" Bottom="0"></SizingMargins>
+          <States>
+            <Enabled Index="0"></Enabled>
+          </States>
+        </Layer>
+      </Layers>
+    </Control>
+    ////////////////////////////////////////////////////////////////////////////
+
     //// GroupPanel ////////////////////////////////////////////////////////////
     <Control Name="GroupPanel" Inherits="Control">
       <ClientMargins Left ="1" Top="22" Right="1" Bottom="1"/>
@@ -866,6 +879,19 @@
     <Control Name="SideBarPanel" Inherits="Control">
       <Layers>
         <Layer Name="Control" Image="SideBarPanel" Width="64" Height="24">
+          <SizingMargins Left="4" Top="4" Right="4" Bottom="4"></SizingMargins>
+          <States>
+            <Enabled Index="0"></Enabled>
+          </States>
+        </Layer>
+      </Layers>
+    </Control>
+    ////////////////////////////////////////////////////////////////////////////
+
+    //// BottomBarPanel///////////////////////////////////////////////////////////
+    <Control Name="BottomBarPanel" Inherits="Control">
+      <Layers>
+        <Layer Name="Control" Image="BottomBarPanel" Width="24" Height="64">
           <SizingMargins Left="4" Top="4" Right="4" Bottom="4"></SizingMargins>
           <States>
             <Enabled Index="0"></Enabled>
@@ -1046,6 +1072,8 @@
     <Image Name="GroupPanel" Asset="GroupPanel"></Image>    
     <Image Name="SideBar" Asset="SideBar"></Image>
     <Image Name="SideBarPanel" Asset="SideBarPanel"></Image>
+    <Image Name="BottomBar" Asset="BottomBar"></Image>
+    <Image Name="BottomBarPanel" Asset="BottomBarPanel"></Image>
     <Image Name="TrackBar" Asset="TrackBar"></Image>
     <Image Name="TrackBar.Button" Asset="TrackBar.Button"></Image>
     <Image Name="ToolBar" Asset="ToolBar"></Image>
