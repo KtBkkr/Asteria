@@ -333,7 +333,7 @@ namespace AsteriaClient.Interface.Controls
                     {
                         {
                             int x = r.Left + 4;
-                            int y = r.Bottom - (pos + 1) * ((int)font.LineSpacing + 0);
+                            int y = r.Bottom - (pos + 1) * (int)font.LineSpacing;
 
                             string msg = ((ConsoleMessage)b[i]).Text;
                             string pre = "";
@@ -347,8 +347,29 @@ namespace AsteriaClient.Interface.Controls
 
                             if (pre != "") msg = pre + ": " + msg;
 
-                            e.Renderer.DrawString(font, msg, x, y, ch.Color);
-                            pos += 1;
+                            string line = "";
+                            string[] words = msg.Split(" ".ToCharArray());
+
+                            List<string> wrappedLines = new List<string>();
+                            for (int w = 0; w < words.Length; w++)
+                            {
+                                if (font.MeasureString(line + words[w]).X > ClientWidth)
+                                {
+                                    wrappedLines.Add(line);
+                                    line = words[w] + " ";
+                                }
+                                else
+                                    line += words[w] + " ";
+                            }
+
+                            wrappedLines.Add(line);
+                            wrappedLines.Reverse();
+                            foreach (string l in wrappedLines)
+                            {
+                                y = r.Bottom - (pos + 1) * (int)font.LineSpacing;
+                                e.Renderer.DrawString(font, l, x, y, ch.Color);
+                                pos += 1;
+                            }
                         }
                     }
                 }

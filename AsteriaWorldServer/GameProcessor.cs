@@ -360,13 +360,12 @@ namespace AsteriaWorldServer
         /// <summary>
         /// Processes individual chat messages.
         /// </summary>
-        /// <param name="sendingCharacter"></param>
-        /// <param name="channel"></param>
-        /// <param name="destination"></param>
-        /// <param name="text"></param>
         public void ProcessChatMessage(Character sendingCharacter, int channel, int destination, string text)
         {
-            // TODO: add application defined/private chat messages handling.
+            ServerToClientMessage wm = ServerToClientMessage.CreateMessageSafe(sendingCharacter.Sender);
+            MessageFormatter.CreateChatMessage(sendingCharacter.Name, channel, destination, text, wm);
+            AddMessageToLinkedZones(wm, sendingCharacter.CurrentZone);
+            //sendingCharacter.MessageBuffer.Add(wm);
         }
 
         private void ProcessPickupMessage(ClientToServerMessage msg, Character c)

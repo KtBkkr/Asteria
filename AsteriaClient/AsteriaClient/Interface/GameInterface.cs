@@ -13,9 +13,10 @@ namespace AsteriaClient.Interface
     /// <summary>
     /// Handles in game interface.
     /// </summary>
-    class GameInterface
+    public class GameInterface
     {
         #region Variables
+        private Context context;
         public Manager manager;
 
         private BottomBar botbar;
@@ -30,6 +31,8 @@ namespace AsteriaClient.Interface
         private Button createButton;
         private Button deleteButton;
         private Button startButton;
+
+        private Label Name;
         #endregion
 
         #region Properties
@@ -40,15 +43,14 @@ namespace AsteriaClient.Interface
         #endregion
 
         #region Events
-        public event CreateCharacterHandler CreateCharacter;
-        public event DeleteCharacterHandler DeleteCharacter;
-        public event StartCharacterHandler StartCharacter;
         #endregion
 
         #region Constructors
-        public GameInterface(Game1 game)
+        public GameInterface(Context context)
         {
-            manager = new Manager(game);
+            this.context = context;
+
+            manager = new Manager(context.Game);
             manager.SkinDirectory = @"Content\Skins\";
             manager.SetSkin("Default");
             manager.Initialize();
@@ -58,6 +60,16 @@ namespace AsteriaClient.Interface
         #endregion
 
         #region Methods
+        public void Update(GameTime gameTime)
+        {
+            manager.Update(gameTime);
+        }
+
+        public void Draw(GameTime gameTime)
+        {
+            //manager.Draw(gameTime);
+        }
+
         private void InitInterface()
         {
             botbar = new BottomBar(manager);
@@ -112,16 +124,66 @@ namespace AsteriaClient.Interface
             botpanel2.Add(panel);
 
             InitCharWindow();
+            InitCharInfo();
         }
 
-        public void Update(GameTime gameTime)
+        private void InitCharWindow()
         {
-            manager.Update(gameTime);
+            charsWindow = new Window(manager);
+            charsWindow.Init();
+            charsWindow.Width = 600;
+            charsWindow.Height = 300;
+            charsWindow.Center();
+            charsWindow.Resizable = false;
+            manager.Add(charsWindow);
+
+            charsList = new ListBox(manager);
+            charsList.Init();
+            charsList.Left = 4;
+            charsList.Top = 4;
+            charsList.TextColor = Color.White;
+            charsList.Width = charsWindow.Width - 22;
+            charsList.Height = charsWindow.Height - 94;
+            charsWindow.Add(charsList);
+
+            createName = new TextBox(manager);
+            createName.Init();
+            createName.Top = charsList.Top + charsList.Height + 4;
+            createName.Left = 4;
+            createName.Width = charsWindow.Width - 22;
+            charsWindow.Add(createName);
+
+            createButton = new Button(manager);
+            createButton.Init();
+            createButton.Top = createName.Top + createName.Height + 4;
+            createButton.Text = "Create Character";
+            createButton.Left = 4;
+            createButton.Width = 150;
+            createButton.Click += new Controls.EventHandler(createButton_Click);
+            charsWindow.Add(createButton);
+
+            deleteButton = new Button(manager);
+            deleteButton.Init();
+            deleteButton.Top = createName.Top + createName.Height + 4;
+            deleteButton.Text = "Delete Character";
+            deleteButton.Left = createButton.Left + 158;
+            deleteButton.Width = 150;
+            deleteButton.Click += new Controls.EventHandler(deleteButton_Click);
+            charsWindow.Add(deleteButton);
+
+            startButton = new Button(manager);
+            startButton.Init();
+            startButton.Top = createName.Top + createName.Height + 4;
+            startButton.Text = "Start Selected";
+            startButton.Left = charsWindow.Width - 168;
+            startButton.Width = 150;
+            startButton.Click += new Controls.EventHandler(startButton_Click);
+            charsWindow.Add(startButton);
         }
 
-        public void Draw(GameTime gameTime)
+        private void InitCharInfo()
         {
-            //manager.Draw(gameTime);
+
         }
 
         /// <summary>
@@ -194,71 +256,18 @@ namespace AsteriaClient.Interface
             }
             else
             {
-                ClientToServerMessage wm = ClientToServerMessage.CreateMessageSafe();
-                wm.MessageType = MessageType.C2S_PlayerChat;
-                wm.Data = message;
-                
+                ClientToServerMessage pm = new ClientToServerMessage();
+                pm.MessageType = MessageType.C2S_PlayerChat;
+                pm.Data = "0|0";
+                pm.GameData = message;
+                context.Network.SendMessage(pm);
             }
-        }
-
-        private void InitCharWindow()
-        {
-            charsWindow = new Window(manager);
-            charsWindow.Init();
-            charsWindow.Width = 600;
-            charsWindow.Height = 300;
-            charsWindow.Center();
-            charsWindow.Resizable = false;
-            manager.Add(charsWindow);
-
-            charsList = new ListBox(manager);
-            charsList.Init();
-            charsList.Left = 4;
-            charsList.Top = 4;
-            charsList.TextColor = Color.White;
-            charsList.Width = charsWindow.Width - 22;
-            charsList.Height = charsWindow.Height - 94;
-            charsWindow.Add(charsList);
-
-            createName = new TextBox(manager);
-            createName.Init();
-            createName.Top = charsList.Top + charsList.Height + 4;
-            createName.Left = 4;
-            createName.Width = charsWindow.Width - 22;
-            charsWindow.Add(createName);
-
-            createButton = new Button(manager);
-            createButton.Init();
-            createButton.Top = createName.Top + createName.Height + 4;
-            createButton.Text = "Create Character";
-            createButton.Left = 4;
-            createButton.Width = 150;
-            createButton.Click += new Controls.EventHandler(createButton_Click);
-            charsWindow.Add(createButton);
-
-            deleteButton = new Button(manager);
-            deleteButton.Init();
-            deleteButton.Top = createName.Top + createName.Height + 4;
-            deleteButton.Text = "Delete Character";
-            deleteButton.Left = createButton.Left + 158;
-            deleteButton.Width = 150;
-            deleteButton.Click += new Controls.EventHandler(deleteButton_Click);
-            charsWindow.Add(deleteButton);
-
-            startButton = new Button(manager);
-            startButton.Init();
-            startButton.Top = createName.Top + createName.Height + 4;
-            startButton.Text = "Start Selected";
-            startButton.Left = charsWindow.Width - 168;
-            startButton.Width = 150;
-            startButton.Click += new Controls.EventHandler(startButton_Click);
-            charsWindow.Add(startButton);
         }
 
         void createButton_Click(object sender, Controls.EventArgs e)
         {
-            if (CreateCharacter != null)
-                CreateCharacter.Invoke(new CharacterMgtEventArgs(0, createName.Text));
+            // TODO: [LOW] add some checking to make sure it's a valid name ie. no spaces, symbols, etc
+            context.Network.CreateCharacter(createName.Text);
         }
 
         void deleteButton_Click(object sender, Controls.EventArgs e)
@@ -268,9 +277,7 @@ namespace AsteriaClient.Interface
                 if (item.Contains(String.Format("NAME:{0}", createName.Text)))
                 {
                     int id = Convert.ToInt32(item.Substring(3, (item.IndexOf("-") - 4)));
-
-                    if (DeleteCharacter != null)
-                        DeleteCharacter.Invoke(new CharacterMgtEventArgs(id, ""));
+                    context.Network.DeleteCharacter(id);
                 }
             }
         }
@@ -279,9 +286,7 @@ namespace AsteriaClient.Interface
         {
             string item = (string)charsList.Items[charsList.ItemIndex];
             int id = Convert.ToInt32(item.Substring(3, (item.IndexOf("-") - 4)));
-
-            if (StartCharacter != null)
-                StartCharacter.Invoke(new CharacterMgtEventArgs(id, ""));
+            context.Network.StartCharacter(id);
         }
         #endregion
     }

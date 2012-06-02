@@ -318,13 +318,13 @@ namespace AsteriaWorldServer.Messages
             wm.DeliveryMethod = NetDeliveryMethod.ReliableUnordered;
         }
 
-        public static void CreateChatMessage(string name, string message, ServerToClientMessage wm)
+        public static void CreateChatMessage(string name, int channel, int destination, string message, ServerToClientMessage wm)
         {
             if (wm.Sender == null)
                 throw (new Exception("wm.Sender can't be NULL on outgoing messages."));
 
             wm.MessageType = MessageType.S2C_ChatMessage;
-            wm.Code = 1; // destination channel ID later on..
+            wm.Code = (channel != 0) ? channel : destination;
             wm.DeliveryMethod = NetDeliveryMethod.ReliableOrdered;
             wm.DeliveryChannel = 0;
             wm.Data = String.Format("{0}|{1}", name, message);

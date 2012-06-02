@@ -111,9 +111,11 @@ namespace AsteriaWorldServer.Messages
 
         private void HandleChat(ClientToServerMessage msg)
         {
-            ServerToClientMessage wm = ServerToClientMessage.CreateMessageSafe(msg.Sender);
-            MessageFormatter.CreateChatMessage(msg.Sender.RemoteEndpoint.ToString(), msg.Data, wm);
-            QueueManager.WorldMessageQueueReadWrite = wm;
+            Character character = (Character)context.Mpt.GetByCharacterId(msg.CharacterId).pCharacter;
+            int channel = Convert.ToInt32(msg.Data.Split('|')[0]);
+            int dest = Convert.ToInt32(msg.Data.Split('|')[1]);
+            string message = msg.GameData;
+            context.GameProcessor.ProcessChatMessage(character, channel, dest, message);
         }
 
         /// <summary>
