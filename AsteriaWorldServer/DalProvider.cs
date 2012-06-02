@@ -46,6 +46,7 @@ namespace AsteriaWorldServer
         private const string PRP_GOLD = "_gold";
 
         private const string ATR_TYPEID = "_typeid";
+        private const string ATR_ZONE = "_zone";
         #endregion
 
         #region Constructors
@@ -283,7 +284,7 @@ namespace AsteriaWorldServer
                         }
                     }
 
-                    Logger.Output(this, "Player ID {0} created character: '{1}' ID: {2}.", msg.AccountId, ch.Name, ch.CharacterId);
+                    Logger.Output(this, "Account ID {0} created character: '{1}' ID: {2}.", msg.AccountId, ch.Name, ch.CharacterId);
 
                     // Save the rest of the character to the DB so the attributes and properties are saved.
                     InsertCharacterAttributes(ch);
@@ -347,7 +348,7 @@ namespace AsteriaWorldServer
                             cmdDeleteCharacter.ExecuteNonQuery();
                         }
 
-                        Logger.Output(this, "Player ID {0} deleted character ID: {1}.", msg.AccountId, characterId);
+                        Logger.Output(this, "Account ID {0} deleted character ID: {1}.", msg.AccountId, characterId);
                     }
 
                     wm.Data = "DELETE";
@@ -414,6 +415,10 @@ namespace AsteriaWorldServer
                                 character.TypeId = value;
                                 break;
 
+                            case ATR_ZONE:
+                                character.CurrentZone = value;
+                                break;
+
                             default:
                                 character.SetAttribute(name, value, description);
                                 break;
@@ -478,9 +483,6 @@ namespace AsteriaWorldServer
                     dr.Close();
                 }
 
-                Point pos = character.Position;
-                var zone = context.ZoneManager.FindZoneContaining(ref pos);
-                character.LastZone = zone.Id;
                 character.LoginTime = DateTime.Now;
             }
             catch (Exception ex)
@@ -531,6 +533,12 @@ namespace AsteriaWorldServer
                         // The TypeID attribute needs to be saved as well.
                         cmdEditAttribute.Parameters["@attributeName"].Value = ATR_TYPEID;
                         cmdEditAttribute.Parameters["@attributeValue"].Value = character.TypeId;
+                        cmdEditAttribute.Parameters["@attributeDescription"].Value = "";
+                        cmdEditAttribute.ExecuteNonQuery();
+
+                        // The Zone attribute needs to be saved as well.
+                        cmdEditAttribute.Parameters["@attributeName"].Value = ATR_ZONE;
+                        cmdEditAttribute.Parameters["@attributeValue"].Value = character.CurrentZone;
                         cmdEditAttribute.Parameters["@attributeDescription"].Value = "";
                         cmdEditAttribute.ExecuteNonQuery();
                     }
@@ -628,6 +636,12 @@ namespace AsteriaWorldServer
                             // The _typeid attribute needs to be saved as well.
                             cmdInsertAttribute.Parameters["@attributeName"].Value = ATR_TYPEID;
                             cmdInsertAttribute.Parameters["@attributeValue"].Value = character.TypeId;
+                            cmdInsertAttribute.Parameters["@attributeDescription"].Value = "";
+                            cmdInsertAttribute.ExecuteNonQuery();
+
+                            // The _zone attribute needs to be saved as well.
+                            cmdInsertAttribute.Parameters["@attributeName"].Value = ATR_ZONE;
+                            cmdInsertAttribute.Parameters["@attributeValue"].Value = character.CurrentZone;
                             cmdInsertAttribute.Parameters["@attributeDescription"].Value = "";
                             cmdInsertAttribute.ExecuteNonQuery();
                         }
@@ -768,19 +782,15 @@ namespace AsteriaWorldServer
 
                     // We save the zone info here into the character so the client gets
                     // an initial picture of the players zone before the zone message hits.
-                    Point position;
-                    c.GetPosition(out position);
-                    Zone zone = context.ZoneManager.FindZoneContaining(ref position);
-                    c.CurrentZone = zone.Id;
-
+                    Zone zone = context.ZoneManager.GetZone(c.CurrentZone);
                     StringBuilder sb = new StringBuilder();
                     sb.Append(zone.Id);
                     sb.Append(";");
                     sb.Append(zone.Name);
                     sb.Append(";");
-                    sb.Append(zone.Min.ToString());
+                    sb.Append(zone.Width);
                     sb.Append(";");
-                    sb.Append(zone.Max.ToString());
+                    sb.Append(zone.Height);
                     c.SetProperty("zoneinfo", sb.ToString());
 
                     // Store colon separated character data list.
@@ -790,7 +800,7 @@ namespace AsteriaWorldServer
                     wm.DeliveryMethod = NetDeliveryMethod.ReliableOrdered;
                     QueueManager.WorldMessageQueueReadWrite = wm;
 
-                    // Tell the WSE to start the character.
+                    // Tell the game processor to start the character.
                     context.GameProcessor.StartCharacter(c);
                 }
                 else

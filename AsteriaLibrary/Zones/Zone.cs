@@ -17,12 +17,9 @@ namespace AsteriaLibrary.Zones
         private object zoneLock = new object();
         private int id;
         private string name;
+        private int width;
+        private int height;
         private List<ServerToClientMessage> messages = new List<ServerToClientMessage>();
-
-        private Point min;
-        private Point max;
-
-        internal List<Zone> linkedZones = new List<Zone>(8);
 
         private List<Entity> objects = new List<Entity>();
         private List<Character> characters = new List<Character>();
@@ -56,26 +53,14 @@ namespace AsteriaLibrary.Zones
         }
 
         /// <summary>
-        /// Returns the zones min coordinate.
+        /// Returns the zones width.
         /// </summary>
-        public Point Min { get { return min; } }
+        public int Width { get { return width; } }
 
         /// <summary>
-        /// Returns the zones max coordinate.
+        /// Returns the zones height.
         /// </summary>
-        public Point Max { get { return max; } }
-
-        /// <summary>
-        /// Returns all neighbouring zones. Read only.
-        /// </summary>
-        public List<Zone> LinkedZones
-        {
-            get
-            {
-                lock (zoneLock)
-                    return new List<Zone>(linkedZones);
-            }
-        }
+        public int Height { get { return height; } }
 
         /// <summary>
         /// Returns all messages from the current zone.
@@ -86,28 +71,6 @@ namespace AsteriaLibrary.Zones
             {
                 lock (zoneLock)
                     return messages;
-            }
-        }
-
-        /// <summary>
-        /// Returns all messages from the current zone and all neighbouring zones.
-        /// </summary>
-        public List<ServerToClientMessage> AllMessages
-        {
-            get
-            {
-                List<ServerToClientMessage> tmpMessages = new List<ServerToClientMessage>();
-                lock (zoneLock)
-                {
-                    tmpMessages.AddRange(Messages);
-
-                    foreach (Zone neighbourZone in LinkedZones)
-                    {
-                        if (neighbourZone != null && neighbourZone.IsActive)
-                            tmpMessages.AddRange(neighbourZone.Messages);
-                    }
-                    return tmpMessages;
-                }
             }
         }
 
@@ -165,20 +128,21 @@ namespace AsteriaLibrary.Zones
         /// <param name="id">Unique zone ID.</param>
         /// <param name="name">Zone name for debugging.</param>
         /// <param name="size">Zone size.</param>
-        public void Initialize(int id, string name, Point min, Point max)
+        public void Initialize(int id, string name, int width, int height)
         {
             lock (zoneLock)
             {
                 this.id = id;
                 this.name = name;
-                this.min = min;
-                this.max = max;
+                this.width = width;
+                this.height = height;
             }
         }
 
         public bool IsInsideZone(ref Point position)
         {
-            return position >= min && position <= max;
+            return position.X >= 0 && position.X <= width
+                && position.Y >= 0 && position.Y >= height;
         }
 
         #region Zone Implementation
@@ -197,17 +161,16 @@ namespace AsteriaLibrary.Zones
         /// </summary>
         /// <param name="name"></param>
         /// <param name="size"></param>
-        public void UpdateZone(string name, Point min, Point max)
+        public void UpdateZone(string name, int width, int height)
         {
-            // TODO: possibly not needed?
             lock (zoneLock)
             {
-                if (this.min == min && this.max == max)
+                if (this.width == width && this.height == height)
                     return;
 
                 this.name = name;
-                this.min = min;
-                this.max = max;
+                this.width = width;
+                this.height = height;
             }
         }
 
@@ -297,26 +260,6 @@ namespace AsteriaLibrary.Zones
                 }
                 return null;
             }
-        }
-
-        /// <summary>
-        /// Adds a linked zone to the list.
-        /// </summary>
-        /// <param name="zone"></param>
-        public void AddLinkedZone(Zone zone)
-        {
-            lock (zoneLock)
-                linkedZones.Add(zone);
-        }
-
-        /// <summary>
-        /// Removes a linked zone from the list.
-        /// </summary>
-        /// <param name="zone"></param>
-        public void RemoveLinkedZone(Zone zone)
-        {
-            lock (zoneLock)
-                linkedZones.Remove(zone);
         }
         #endregion
 

@@ -90,9 +90,9 @@ namespace AsteriaWorldServer.Messages
                 sb.Append(":");
                 sb.Append(zone.Name);
                 sb.Append(":");
-                sb.Append(zone.Min.ToString());
+                sb.Append(zone.Width);
                 sb.Append(":");
-                sb.Append(zone.Max.ToString());
+                sb.Append(zone.Height);
 
                 foreach (Entity entity in zone.Entities)
                 {
@@ -128,7 +128,6 @@ namespace AsteriaWorldServer.Messages
             wm.DeliveryChannel = 0;
 
             StringBuilder sb = new StringBuilder();
-
             foreach (Zone zone in zones)
             {
                 sb.Append(zone.Id);

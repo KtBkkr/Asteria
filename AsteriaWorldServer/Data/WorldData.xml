@@ -5,9 +5,12 @@
     <!-- Maximum distance in tiles the player is allowed to pick up items. -->
     <PickupDistance>2</PickupDistance>
     
-    <!-- Spawn point for new characters -->
+    <!-- Spawn position for new characters -->
     <!-- TODO: Possibly make this more dynamic.. -->
     <PlayerStartPoint>0,0</PlayerStartPoint>
+
+    <!-- Spawn zone for new characters -->
+    <PlayerStartZone>1</PlayerStartZone>
 
     <!-- TODO: for proper zoning we will have to load the zones from a separate file. -->
     <!-- The zones can have different sizes and differenthandling like town or crowdy areas. -->

@@ -51,6 +51,10 @@ namespace AsteriaWorldServer
                 if (ecd == null)
                     return false;
 
+                // empty or blank name.
+                if (string.IsNullOrEmpty(data[1]) || string.IsNullOrWhiteSpace(data[1]))
+                    return false;
+
                 foreach (KeyValuePair<string, int> kvp in ecd.DefaultAttributes)
                     character.SetAttribute(kvp.Key, kvp.Value);
 
@@ -59,6 +63,9 @@ namespace AsteriaWorldServer
                 character.TypeId = typeId;
                 character.Position = (Point)DataManager.Singletone.WorldParameters["PlayerStartPoint"];
                 character.Gold = 0;
+
+                // TODO: [MID] generate a new zone for the new player.
+                character.CurrentZone = Convert.ToInt32(DataManager.Singletone.WorldParameters["PlayerStartZone"]);
 
                 character.SetAttribute("_typeid", typeId);
                 character.SetAttribute("level", 0);

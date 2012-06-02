@@ -117,10 +117,7 @@ namespace AsteriaWorldServer
 
                 // Create the zone manager.
                 Logger.Output(this, "Creating zone manager..");
-                context.ZoneManager = new ZoneManager(
-                    Convert.ToInt32(dMngr.WorldParameters["WorldZoneSize"]),
-                    Convert.ToInt32(dMngr.WorldParameters["WorldZones"]),
-                    Convert.ToInt32(dMngr.WorldParameters["WorldZones"]));
+                context.ZoneManager = new ZoneManager(true);
 
                 // Now load all static predefined entities.
                 Logger.Output(this, "Loading static entities..");

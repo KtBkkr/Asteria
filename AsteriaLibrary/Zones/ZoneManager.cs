@@ -18,100 +18,32 @@ namespace AsteriaLibrary.Zones
         private SortedList<int, Zone> entity_lookup = new SortedList<int, Zone>();
         private SortedList<int, Zone> zone_lookup = new SortedList<int, Zone>();
 
-        private int zoneSize;
-        private int zoneCountX;
-        private int zoneCountY;
-
         private static ZoneManager singletone;
         #endregion
 
         #region Properties
-        public int ZoneSize { get { return zoneSize; } }
-        public int ZoneCountX { get { return zoneCountX; } }
-        public int ZoneCountY { get { return zoneCountY; } }
         public static ZoneManager Singletone { get { return singletone; } }
         #endregion
 
         #region Constructors
         /// <summary>
-        /// Creates a new empty ZoneManager instance.
-        /// This is used by the client to create its local world.
+        /// Creates a new ZoneManager instance.
+        /// This is used by the server to create the world zones.
         /// </summary>
         public ZoneManager()
         {
         }
 
         /// <summary>
-        /// Creates a new ZoneManager instance with a set zoneSize and tiling.
+        /// Creates a new ZoneManager instance.
         /// This is used by the server to create the world zones.
         /// </summary>
-        /// <param name="zoneSize"></param>
-        /// <param name="zoneCountX"></param>
-        /// <param name="zoneCountY"></param>
-        public ZoneManager(int zoneSize, int zoneCountX, int zoneCountY)
+        public ZoneManager(bool server)
         {
             ZoneManager.singletone = this;
 
-            this.zoneSize = zoneSize;
-            this.zoneCountX = zoneCountX;
-            this.zoneCountY = zoneCountY;
-
-            // Create zones
-            for (int y = 0; y < zoneCountY; y++)
-            {
-                for (int x = 0; x < zoneCountX; x++)
-                {
-                    int id = x + y * zoneCountX;
-                    AddZone(id, id.ToString(), new Point(x * zoneSize, y * zoneSize), new Point(x * zoneSize + zoneSize, y * zoneSize + zoneSize));
-                }
-            }
-
-            // Calculate neighbors
-            for (int y = 0; y < zoneCountY; y++)
-            {
-                for (int x = 0; x < zoneCountX; x++)
-                {
-                    int id = x + y * zoneCountX;
-                    Zone z = GetZone(id);
-
-                    // Left
-                    if (x > 0)
-                        z.AddLinkedZone(GetZone(id - 1));
-
-                    // Right
-                    if (x < zoneCountX - 1)
-                        z.AddLinkedZone(GetZone(id + 1));
-
-                    // Row before neighbor
-                    if (y > 0)
-                    {
-                        // Top
-                        z.AddLinkedZone(GetZone(id - zoneCountX));
-
-                        // Top Left
-                        if (x > 0)
-                            z.AddLinkedZone(GetZone(id - zoneCountX - 1));
-
-                        // Top Right
-                        if (x < zoneCountX - 1)
-                            z.AddLinkedZone(GetZone(id - zoneCountX + 1));
-                    }
-
-                    // Row after neighbor
-                    if (y < zoneCountY - 1)
-                    {
-                        z.AddLinkedZone(GetZone(id + zoneCountX));
-
-                        // Bottom Left
-                        if (x > 0)
-                            z.AddLinkedZone(GetZone(id + zoneCountX - 1));
-
-                        // Bottom Right
-                        if (x < zoneCountX - 1)
-                            z.AddLinkedZone(GetZone(id + zoneCountX + 1));
-                    }
-                }
-            }
+            // TODO
+            AddZone(1, "Test Zone", 1000, 1000);
         }
         #endregion
 
@@ -125,12 +57,12 @@ namespace AsteriaLibrary.Zones
             }
         }
 
-        public void AddZone(int id, string name, Point min, Point max)
+        public void AddZone(int id, string name, int width, int height)
         {
             lock (zoneMngrLock)
             {
                 Zone z = new Zone();
-                z.Initialize(id, name, min, max);
+                z.Initialize(id, name, width, height);
                 zones.Add(z);
                 zone_lookup.Add(z.Id, z);
             }
@@ -170,19 +102,6 @@ namespace AsteriaLibrary.Zones
             }
         }
 
-        public Zone FindZoneContaining(ref Point position)
-        {
-            lock (zoneMngrLock)
-            {
-                foreach (Zone z in zones)
-                {
-                    if (z.IsInsideZone(ref position))
-                        return z;
-                }
-                return null;
-            }
-        }
-
         public Entity GetEntity(int id)
         {
             lock (zoneMngrLock)
@@ -201,11 +120,7 @@ namespace AsteriaLibrary.Zones
                 if (GetEntity(entity.Id) != null)
                     return false;
 
-                Point position = Point.Zero;
-                entity.GetPosition(out position);
-
-                Zone zone = FindZoneContaining(ref position);
-
+                Zone zone = GetZone(entity.CurrentZone);
                 if (zone == null)
                     return false;
 
@@ -308,7 +223,7 @@ namespace AsteriaLibrary.Zones
                 Zone oldZone = GetZone(id);
 
                 Zone newZone = new Zone();
-                newZone.Initialize(id, oldZone.Name, oldZone.Min, oldZone.Max);
+                newZone.Initialize(id, oldZone.Name, oldZone.Width, oldZone.Height);
 
                 foreach (Entity entity in oldZone.Entities)
                     entity_lookup.Remove(entity.Id);

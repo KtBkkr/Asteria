@@ -75,15 +75,14 @@ namespace AsteriaWorldServer
         {
             try
             {
-                // Calculate the character zone.
+                // Find the character zone
                 Zone zone = context.ZoneManager.GetZone(character.CurrentZone);
+                List<Zone> zones = new List<Zone>();
+                zones.Add(zone);
 
                 Logger.Output(this, "StartCharacter: '{0}' ({1}), zone: {2} ({3})", character.Name, character.CharacterId, zone.Name, zone.Id);
-
-                List<Zone> zones = zone.LinkedZones;
-                zones.Add(zone);
 #if DEBUG
-                if (zones.Count == 0)
+                if (zone.Id == 0 || zone == null)
                     throw (new Exception("Sending empty zone message. The player always starts in one zone. This shouldn't be possible at all."));
 #endif
                 ServerToClientMessage wm = ServerToClientMessage.CreateMessageSafe(character.Sender);
@@ -93,7 +92,7 @@ namespace AsteriaWorldServer
                 // Add entity -> all zone players.
                 ServerToClientMessage wm2 = ServerToClientMessage.CreateMessageSafe(character.Sender);
                 MessageFormatter.CreateAddEntityToZoneMessage(character, wm2);
-                AddMessageToLinkedZones(wm2, zone.Id);
+                AddMessageToZone(zone.Id, wm2);
                 ServerToClientMessage.FreeSafe(wm2);
 
                 // Finally add to zone.
@@ -105,113 +104,113 @@ namespace AsteriaWorldServer
             }
         }
 
-        /// <summary>
-        /// Handles entity movements, fires notifications and takes care of zone changes.
-        /// If a WSE wants to change an entities position it must be done through this method.
-        /// </summary>
-        /// <param name="e"></param>
-        /// <param name="newPosition"></param>
-        public void MoveEntity(Entity e, ref Point newPosition)
-        {
-            if (e.Position == newPosition)
-                return;
+        ///// <summary>
+        ///// Handles entity movements, fires notifications and takes care of zone changes.
+        ///// If a WSE wants to change an entities position it must be done through this method.
+        ///// </summary>
+        ///// <param name="e"></param>
+        ///// <param name="newPosition"></param>
+        //public void MoveEntity(Entity e, ref Point newPosition)
+        //{
+        //    if (e.Position == newPosition)
+        //        return;
 
-            // Catch zone changes and build notifications.
-            Zone oldZone = context.ZoneManager.GetZone(e.CurrentZone);
-            Zone newZone = context.ZoneManager.FindZoneContaining(ref newPosition);
+        //    // Catch zone changes and build notifications.
+        //    Zone oldZone = context.ZoneManager.GetZone(e.CurrentZone);
+        //    Zone newZone = context.ZoneManager.FindZoneContaining(ref newPosition);
 
-            if (newZone == null)
-            {
-                Logger.Output(this, "MoveEntity() out of world map -> id: {0}, old position: {1}, new position: {2}", e.Id, e.Position, newPosition);
-                return;
-            }
+        //    if (newZone == null)
+        //    {
+        //        Logger.Output(this, "MoveEntity() out of world map -> id: {0}, old position: {1}, new position: {2}", e.Id, e.Position, newPosition);
+        //        return;
+        //    }
 
-            e.Position = newPosition;
+        //    e.Position = newPosition;
 
-            if (newZone.Id != e.CurrentZone)
-            {
-                // Remove entity from old zone and calculate added/removed zones.
-                context.ZoneManager.MoveEntity(e, newZone);
+        //    if (newZone.Id != e.CurrentZone)
+        //    {
+        //        // Remove entity from old zone and calculate added/removed zones.
+        //        context.ZoneManager.MoveEntity(e, newZone);
 
-                StringBuilder sb = new StringBuilder();
-                sb.Append(newZone.Id);
-                sb.Append(";");
-                sb.Append(newZone.Name);
-                sb.Append(";");
-                sb.Append(newZone.Min.ToString());
-                sb.Append(";");
-                sb.Append(newZone.Max.ToString());
+        //        StringBuilder sb = new StringBuilder();
+        //        sb.Append(newZone.Id);
+        //        sb.Append(";");
+        //        sb.Append(newZone.Name);
+        //        sb.Append(";");
+        //        sb.Append(newZone.Min.ToString());
+        //        sb.Append(";");
+        //        sb.Append(newZone.Max.ToString());
 
-                e.SetProperty("zoneinfo", sb.ToString()); // TODO [HIGHEST]: this is WSE implementation specific and can't be in the server framework!
+        //        e.SetProperty("zoneinfo", sb.ToString()); // TODO [HIGHEST]: this is WSE implementation specific and can't be in the server framework!
 
-                IList<Zone> v_newzones = newZone.LinkedZones;
-                v_newzones.Add(newZone);
-                IList<Zone> v_oldzones = oldZone.LinkedZones;
-                v_oldzones.Add(oldZone);
+        //        IList<Zone> v_newzones = newZone.LinkedZones;
+        //        v_newzones.Add(newZone);
+        //        IList<Zone> v_oldzones = oldZone.LinkedZones;
+        //        v_oldzones.Add(oldZone);
 
-                var unchangedZones = v_newzones.Intersect(v_oldzones);
-                var removedZones = v_oldzones.Except(unchangedZones);
-                var addedZones = v_newzones.Except(unchangedZones);
+        //        var unchangedZones = v_newzones.Intersect(v_oldzones);
+        //        var removedZones = v_oldzones.Except(unchangedZones);
+        //        var addedZones = v_newzones.Except(unchangedZones);
 
-                // Manually create the EntitySync messages so we notify
-                // only the new zones instead of all linked zones.
-                if (addedZones.Count() > 0)
-                {
-                    ServerToClientMessage wm = ServerToClientMessage.CreateMessageSafe();
-                    MessageFormatter.CreateAddEntityToZoneMessage(e, wm);
-                    wm.TurnNumber = turnNumber;
+        //        // Manually create the EntitySync messages so we notify
+        //        // only the new zones instead of all linked zones.
+        //        if (addedZones.Count() > 0)
+        //        {
+        //            ServerToClientMessage wm = ServerToClientMessage.CreateMessageSafe();
+        //            MessageFormatter.CreateAddEntityToZoneMessage(e, wm);
+        //            wm.TurnNumber = turnNumber;
 
-                    foreach (Zone z in addedZones)
-                    {
-                        if (z != null)
-                            AddMessageToSingleZone(z, wm);
-                    }
-                    ServerToClientMessage.FreeSafe(wm);
-                }
+        //            foreach (Zone z in addedZones)
+        //            {
+        //                if (z != null)
+        //                    AddMessageToSingleZone(z, wm);
+        //            }
+        //            ServerToClientMessage.FreeSafe(wm);
+        //        }
 
-                // Send RemoveEntity messages.
-                if (removedZones.Count() > 0)
-                {
-                    ServerToClientMessage wm = ServerToClientMessage.CreateMessageSafe();
-                    MessageFormatter.CreateRemoveEntityFromZoneMessage(e, wm);
-                    wm.TurnNumber = turnNumber;
+        //        // Send RemoveEntity messages.
+        //        if (removedZones.Count() > 0)
+        //        {
+        //            ServerToClientMessage wm = ServerToClientMessage.CreateMessageSafe();
+        //            MessageFormatter.CreateRemoveEntityFromZoneMessage(e, wm);
+        //            wm.TurnNumber = turnNumber;
 
-                    foreach (Zone z in removedZones)
-                    {
-                        if (z != null)
-                            AddMessageToSingleZone(z, wm);
-                    }
-                    ServerToClientMessage.FreeSafe(wm);
-                }
+        //            foreach (Zone z in removedZones)
+        //            {
+        //                if (z != null)
+        //                    AddMessageToSingleZone(z, wm);
+        //            }
+        //            ServerToClientMessage.FreeSafe(wm);
+        //        }
 
-                // Place entity in new zone.
-                Logger.Output(this, "MoveEntity: '{0}' ({1}), zone: {2} ({3})", e.Name, e.Id, newZone.Name, newZone.Id);
+        //        // Place entity in new zone.
+        //        Logger.Output(this, "MoveEntity: '{0}' ({1}), zone: {2} ({3})", e.Name, e.Id, newZone.Name, newZone.Id);
 
-                // Send zone syncs to all zones the character can now see or not.
-                if (e.GetType() == typeof(Character))
-                {
-                    Character character = (Character)e;
+        //        // Send zone syncs to all zones the character can now see or not.
+        //        if (e.GetType() == typeof(Character))
+        //        {
+        //            Character character = (Character)e;
 
-                    if (addedZones.Count() > 0)
-                    {
-                        ServerToClientMessage wm = ServerToClientMessage.CreateMessageSafe(character.Sender);
-                        MessageFormatter.CreateZoneSyncMessage(addedZones, wm);
-                        QueueManager.WorldMessageQueueReadWrite = wm;
-                    }
+        //            if (addedZones.Count() > 0)
+        //            {
+        //                ServerToClientMessage wm = ServerToClientMessage.CreateMessageSafe(character.Sender);
+        //                MessageFormatter.CreateZoneSyncMessage(addedZones, wm);
+        //                QueueManager.WorldMessageQueueReadWrite = wm;
+        //            }
 
-                    if (removedZones.Count() > 0)
-                    {
-                        ServerToClientMessage wm2 = ServerToClientMessage.CreateMessageSafe(character.Sender);
-                        MessageFormatter.CreateZoneSyncMessage(removedZones, wm2);
-                        QueueManager.WorldMessageQueueReadWrite = wm2;
-                    }
-                }
-            }
-            else
-            {
-                //oldZone.OnEntityMoved(e);
-            }
-        }
+        //            if (removedZones.Count() > 0)
+        //            {
+        //                ServerToClientMessage wm2 = ServerToClientMessage.CreateMessageSafe(character.Sender);
+        //                MessageFormatter.CreateZoneSyncMessage(removedZones, wm2);
+        //                QueueManager.WorldMessageQueueReadWrite = wm2;
+        //            }
+        //        }
+        //    }
+        //    else
+        //    {
+        //        //oldZone.OnEntityMoved(e);
+        //    }
+        //}
 
         /// <summary>
         /// Removes the players character from the managed characters collection.
@@ -233,7 +232,7 @@ namespace AsteriaWorldServer
             // Dispatch the message to whole zone.
             ServerToClientMessage wm = ServerToClientMessage.CreateMessageSafe(c.Sender);
             MessageFormatter.CreateRemoveEntityFromZoneMessage(c, wm);
-            AddMessageToLinkedZones(wm, c.CurrentZone);
+            AddMessageToZone(c.CurrentZone, wm);
             ServerToClientMessage.FreeSafe(wm);
         }
 
@@ -307,8 +306,8 @@ namespace AsteriaWorldServer
         {
             ServerToClientMessage wm = ServerToClientMessage.CreateMessageSafe(sendingCharacter.Sender);
             MessageFormatter.CreateChatMessage(sendingCharacter.Name, channel, destination, text, wm);
-            AddMessageToLinkedZones(wm, sendingCharacter.CurrentZone);
-            //sendingCharacter.MessageBuffer.Add(wm);
+            AddMessageToZone(sendingCharacter.CurrentZone, wm);
+            ServerToClientMessage.FreeSafe(wm);
         }
 
         //private void ProcessPickupMessage(ClientToServerMessage msg, Character c)
@@ -440,44 +439,18 @@ namespace AsteriaWorldServer
         /// <param name="elapsedMilliseconds">Number of milliseconds passed since last turn.</param>
         private void OnNewTurn(float elapsedMilliseconds)
         {
+            // TODO
         }
         #endregion
 
         #region Helper Functions
         /// <summary>
-        /// Stores the message into the buffer for all character entities of the given zone and it's linked zones.
-        /// The message is added to a per client based buffer but not sent immediately. To send the buffered messages use DispatchZoneMessages.
-        /// The ServerToClientMessage.TurnNumber is set to the current turn number regardless what the ServerToClientMessage.TurnNumber contains.
-        /// Note that the passed in message can be immediately returned to the pool since AddZoneMessage creates separate copies of the message for each destination.
-        /// </summary>
-        /// <param name="wm"></param>
-        /// <param name="zoneId"></param>
-        protected void AddMessageToLinkedZones(ServerToClientMessage wm, int zoneId)
-        {
-            // Set the turnhere.
-            wm.TurnNumber = turnNumber;
-
-            // Get current zone and send.
-            Zone zone = context.ZoneManager.GetZone(zoneId);
-            AddMessageToSingleZone(zone, wm);
-
-            // Get neighbors and send if active
-            foreach (Zone z in zone.LinkedZones)
-            {
-                // IZone implementation can return null values.
-                if (z != null && z.IsActive)
-                    AddMessageToSingleZone(z, wm);
-            }
-        }
-
-        /// <summary>
         /// Buffers the message to all character entities of a single zone.
         /// Note that the message parameter wm is not used directly, instead a copy is created.
         /// </summary>
-        /// <param name="zone"></param>
-        /// <param name="wm"></param>
-        private void AddMessageToSingleZone(Zone zone, ServerToClientMessage wm)
+        private void AddMessageToZone(Zone zone, ServerToClientMessage wm)
         {
+            wm.TurnNumber = turnNumber;
             foreach (Character c in zone.Characters)
             {
                 // The copy is mandatory or we will end up overwritng messages
@@ -487,10 +460,19 @@ namespace AsteriaWorldServer
         }
 
         /// <summary>
+        /// Buffers the message to all character entities of a single zone.
+        /// Note that the message parameter wm is not used directly, instead a copy is created.
+        /// </summary>
+        private void AddMessageToZone(int zoneId, ServerToClientMessage wm)
+        {
+            Zone zone = zoneMngr.GetZone(zoneId);
+            if (zone != null)
+                AddMessageToZone(zone, wm);
+        }
+
+        /// <summary>
         /// Immediately sends the message to all character entities of a single zone.
         /// </summary>
-        /// <param name="zone"></param>
-        /// <param name="wm"></param>
         private void DispatchToZoneCharacters(Zone zone, ServerToClientMessage wm)
         {
             foreach (Character c in zone.Characters)
@@ -584,24 +566,13 @@ namespace AsteriaWorldServer
         /// <summary>
         /// Builds a list containing character entities residing inside the given and linked zones.
         /// </summary>
-        /// <param name="zoneId"></param>
-        /// <returns></returns>
         private List<Character> BuildZoneCharacterList(int zoneId)
         {
             List<Character> allCharacters = new List<Character>();
 
             // Get current zone characters.
             Zone zone = context.ZoneManager.GetZone(zoneId);
-
             allCharacters.AddRange(zone.Characters);
-
-            // Get neighbours and send if active.
-            foreach (Zone z in zone.LinkedZones)
-            {
-                if (z != null && z.IsActive)
-                    allCharacters.AddRange(z.Characters);
-            }
-
             return allCharacters;
         }
         #endregion
