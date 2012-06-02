@@ -229,7 +229,10 @@ namespace AsteriaWorldServer
                 InvokeBackgroundCharacterSave(c);
             }
 
-            // Dispatch the message to whole zone.
+            // Remove character from the zone.
+            zoneMngr.RemoveEntity(c.Id);
+
+            // Dispatch the message to the zone.
             ServerToClientMessage wm = ServerToClientMessage.CreateMessageSafe(c.Sender);
             MessageFormatter.CreateRemoveEntityFromZoneMessage(c, wm);
             AddMessageToZone(c.CurrentZone, wm);

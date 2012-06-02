@@ -77,7 +77,7 @@ namespace AsteriaLibrary.Messages
         {
             isDisposed = true;
 
-            Debug.Assert(IsAllocatedFromPool, "ServerToServerMessage.Dispose() found non pooled message disposing!");
+            Debug.Assert((IsAllocatedFromPool == false), "ServerToServerMessage.Dispose() found non pooled message disposing!");
 
             if (IsAllocatedFromPool)
                 FreeSafe(this);
