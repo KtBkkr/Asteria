@@ -136,7 +136,7 @@ namespace AsteriaWorldServer.Messages
                                 {
                                     Logger.Output(this, "Turn {0}: Sent ZoneMessage ({1}) to {2} -> Zones: {3}", wm.TurnNumber, pa, destCharacter.Name, wm.Data);
                                 }
-                                else if (pa == PlayerAction.InvalidTarget || pa == PlayerAction.InvalidAction)
+                                else if (pa == PlayerAction.InvalidAction)
                                 {
                                     string reason = "Unknown";
                                     if (wm.Data != null && wm.Data.Length > 0)

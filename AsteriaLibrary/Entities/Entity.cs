@@ -16,7 +16,6 @@ namespace AsteriaLibrary.Entities
         private int id;
         private int typeId;
         private Point position;
-        private int rotation;
 
         protected Dictionary<string, EntityAttribute> attributes;
         protected Dictionary<string, EntityProperty> properties;
@@ -53,15 +52,6 @@ namespace AsteriaLibrary.Entities
         {
             get { return position; }
             set { position = value; }
-        }
-
-        /// <summary>
-        /// Gets the current rotation.
-        /// </summary>
-        public int Rotation
-        {
-            get { return rotation; }
-            set { rotation = value; }
         }
 
         /// <summary>
@@ -297,8 +287,6 @@ namespace AsteriaLibrary.Entities
             sb.Append(":");
             sb.Append(Position.ToString());
             sb.Append(":");
-            sb.Append(Rotation.ToString());
-            sb.Append(":");
 
             sb.Append(Attributes.Count);
             sb.Append(":");
@@ -346,7 +334,6 @@ namespace AsteriaLibrary.Entities
             Name = elements[counter++];
             CurrentZone = int.Parse(elements[counter++]);
             position = (Point)elements[counter++];
-            rotation = int.Parse(elements[counter++]);
 
             int attributeCount = int.Parse(elements[counter++]);
 

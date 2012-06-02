@@ -125,22 +125,9 @@ namespace AsteriaClient.Network
                 case PlayerAction.AddZone:
                 case PlayerAction.RemoveZone:
 
-                case PlayerAction.Attack:
-                case PlayerAction.Damage:
-                case PlayerAction.Move:
-                case PlayerAction.Pickup:
-                case PlayerAction.Drop:
-                case PlayerAction.Use:
-                case PlayerAction.EquipmentChange:
-                case PlayerAction.EquipmentSync:
                 case PlayerAction.Teleport:
-                case PlayerAction.PlayerDied:
-                case PlayerAction.InventoryChange:
-                case PlayerAction.InventorySync:
 
                 case PlayerAction.InvalidAction:
-                case PlayerAction.InvalidMove:
-                case PlayerAction.InvalidTarget:
                     break;
             }
             Logger.Output(this, "HandleZoneMessage() type {0}", a);

@@ -28,12 +28,8 @@ namespace AsteriaWorldServer
         private MasterPlayerTable mpt;
         private ServerToClientMessageSerializer serializer;
 
-        private Dictionary<int, CharacterState> charStates = new Dictionary<int, CharacterState>();
-        private List<int> removeCharStates = new List<int>();
-
         private ZoneManager zoneMngr;
-        private MoveManager moveMngr;
-
+        
         private int pickupDistance;
         private int turnNumber;
         private static int lastEntityID;
@@ -54,10 +50,6 @@ namespace AsteriaWorldServer
 
             // Save our own instance of the ZoneManager, we could have passed that through the constructor as well.
             zoneMngr = context.ZoneManager;
-
-            // Create MoveManager (handles valid world positions).
-            moveMngr = new MoveManager(zoneMngr.ZoneSize * zoneMngr.ZoneCountX, zoneMngr.ZoneSize * zoneMngr.ZoneCountY);
-            moveMngr.Initialize();
 
             string s = DataManager.Singletone.WorldParameters["PickupDistance"];
             pickupDistance = int.Parse(s);
@@ -273,62 +265,13 @@ namespace AsteriaWorldServer
             {
                 if (msg.MessageType == MessageType.C2S_PlayerAction)
                 {
-                    if (!charStates.ContainsKey(c.CharacterId))
-                        charStates.Add(c.CharacterId, new CharacterState(c.CharacterId));
-
                     // Queues message for execution inside OnNewTurn.
                     // Note that a real WSE would add considerably more preprocessing here.
-                    CharacterState cs = charStates[c.CharacterId];
                     switch (msg.Action)
                     {
-                        case (int)PlayerAction.Move:
-                            Point moveTarget = (Point)msg.GameData;
-                            Zone zone = context.ZoneManager.FindZoneContaining(ref moveTarget);
-
-                            if (zone != null && moveMngr.IsValidPosition(ref moveTarget))
-                            {
-                                c.SetAttribute("movementoption", int.Parse(msg.Data));
-                                cs.SetMove(moveTarget, msg.Data);
-                            }
-                            else
-                            {
-                                ServerToClientMessage wm = ServerToClientMessage.CreateMessageSafe(c.Sender);
-                                MessageFormatter.CreateInvalidMoveMessage(c, ref moveTarget, wm);
-                                c.MessageBuffer.Add(wm);
-                            }
-                            break;
-
-                        case (int)PlayerAction.Attack:
-                            // TODO: [MID] implement
-                            break;
-
-                        case (int)PlayerAction.Pickup:
-                            ProcessPickupMessage(msg, c);
-                            break;
-
-                        case (int)PlayerAction.Drop:
-                            // TODO: [MID] implement
-                            // 1. Add item to zone
-                            // 2. Notify zone about new item
-                            // 3. Notify player about inventory change
-                            break;
-
-                        case (int)PlayerAction.Use:
-                            // TODO: [MID] implement
-                            break;
-
-                        case (int)PlayerAction.EquipmentChange:
-                            // TODO: [MID] implement
-                            // 1. Check if possible
-                            // 2. Notify zone about equipment change
-                            // 3. Notify player about equipment change and inventory change
-                            break;
-
                         case (int)PlayerAction.Teleport:
                             // TODO: [MID] implement
                             break;
-
-                        // TODO: [WSE DEV] add custom game specific actions.
 
                         default:
                             // Invalid action codes are not to be ignored, they represent either an outdated or malicious client!
@@ -368,118 +311,118 @@ namespace AsteriaWorldServer
             //sendingCharacter.MessageBuffer.Add(wm);
         }
 
-        private void ProcessPickupMessage(ClientToServerMessage msg, Character c)
-        {
-            int entityId;
-            if (int.TryParse(msg.GameData, out entityId))
-            {
-                Entity e = context.ZoneManager.GetEntity(entityId);
-                bool isWrongTarget = false;
-                string reason = "";
+        //private void ProcessPickupMessage(ClientToServerMessage msg, Character c)
+        //{
+        //    int entityId;
+        //    if (int.TryParse(msg.GameData, out entityId))
+        //    {
+        //        Entity e = context.ZoneManager.GetEntity(entityId);
+        //        bool isWrongTarget = false;
+        //        string reason = "";
 
-                if (e == null)
-                {
-                    isWrongTarget = true;
-                    reason = "Item not found.";
-                }
-                else
-                {
-                    // Check if thats a pickable item at all.
-                    if ((e.TypeId > 1000) && (e.TypeId < 3001)) // TODO: those values must be kept in sync with the Entities.xml, maybe using worldParams is better??
-                    {
-                        Point distance = c.Position - e.Position;
-                        if (distance.Length() <= pickupDistance)
-                        {
-                            try
-                            {
-                                // Check if possible and add.
-                                EntityClassData ecd;
-                                InventoryBag bag;
-                                int itemAmount = 1;
-                                if (InventoryManager.AddItem(c, e.Id, itemAmount, out ecd, out bag))
-                                {
-                                    // Start saving character to DB.
-                                    InvokeBackgroundCharacterSave(c);
+        //        if (e == null)
+        //        {
+        //            isWrongTarget = true;
+        //            reason = "Item not found.";
+        //        }
+        //        else
+        //        {
+        //            // Check if thats a pickable item at all.
+        //            if ((e.TypeId > 1000) && (e.TypeId < 3001)) // TODO: those values must be kept in sync with the Entities.xml, maybe using worldParams is better??
+        //            {
+        //                Point distance = c.Position - e.Position;
+        //                if (distance.Length() <= pickupDistance)
+        //                {
+        //                    try
+        //                    {
+        //                        // Check if possible and add.
+        //                        EntityClassData ecd;
+        //                        InventoryBag bag;
+        //                        int itemAmount = 1;
+        //                        if (InventoryManager.AddItem(c, e.Id, itemAmount, out ecd, out bag))
+        //                        {
+        //                            // Start saving character to DB.
+        //                            InvokeBackgroundCharacterSave(c);
 
-                                    // Bag contains now the real characters item bag already updated with
-                                    // the amount but we need to send only the changed amount so we need a copy.
-                                    InventoryBag newBag = InventoryBag.FromInventoryBag(bag);
-                                    newBag.Amount = itemAmount;
+        //                            // Bag contains now the real characters item bag already updated with
+        //                            // the amount but we need to send only the changed amount so we need a copy.
+        //                            InventoryBag newBag = InventoryBag.FromInventoryBag(bag);
+        //                            newBag.Amount = itemAmount;
 
-                                    // Check if special case for gold.
-                                    if (ecd.SlotSize == Size.Zero)
-                                    {
-                                        if (e.Name == "Gold")
-                                        {
-                                            // TODO: [HIGH] implement sending gold change to client.
-                                            c.Gold += e.Gold;
-                                        }
-                                        else
-                                        {
-                                            isWrongTarget = true;
-                                            reason = "I can't pickup this item!"; // TODO: [LOW] implement message generator, the text is displayed in the client.
-                                        }
-                                    }
-                                    else
-                                    {
-                                        // Send cient the inventory layout.
-                                        ServerToClientMessage wm = ServerToClientMessage.CreateMessageSafe();
-                                        // TODO: [LOW] the framework supports changing multiple items at once but we always send only one. Rethink if the whole inventory logic fits as it is now.
-                                        MessageFormatter.CreateInventoryChangeMessage(c, InventoryChangeType.Pickup, new InventoryBag[] { newBag }, wm);
-                                        c.MessageBuffer.Add(wm);
-                                    }
-                                }
-                                else
-                                {
-                                    ServerToClientMessage wm = ServerToClientMessage.CreateMessageSafe();
-                                    MessageFormatter.CreateInvalidActionMessage(PlayerAction.Pickup, "Inventory full!", wm);
-                                    c.MessageBuffer.Add(wm);
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                Logger.Output(this, "ProcessMessage() msg: 'Pickup', item: {0}, character: {1}, exception: {2}, stacktrace {3}", entityId, c.CharacterId, ex.Message, ex.StackTrace);
-                                ServerToClientMessage wm = ServerToClientMessage.CreateMessageSafe();
-                                MessageFormatter.CreateInvalidActionMessage(PlayerAction.Pickup, "Unexpected error.", wm);
-                                c.MessageBuffer.Add(wm);
-                                isWrongTarget = true;
-                                reason = "Inventory error!";
-                            }
-                        }
-                        else
-                        {
-                            isWrongTarget = true;
-                            reason = "Item is unreachable!";
-                        }
-                    }
-                    else
-                    {
-                        isWrongTarget = true;
-                        reason = "This can't be picked up!";
-                    }
-                }
+        //                            // Check if special case for gold.
+        //                            if (ecd.SlotSize == Size.Zero)
+        //                            {
+        //                                if (e.Name == "Gold")
+        //                                {
+        //                                    // TODO: [HIGH] implement sending gold change to client.
+        //                                    c.Gold += e.Gold;
+        //                                }
+        //                                else
+        //                                {
+        //                                    isWrongTarget = true;
+        //                                    reason = "I can't pickup this item!"; // TODO: [LOW] implement message generator, the text is displayed in the client.
+        //                                }
+        //                            }
+        //                            else
+        //                            {
+        //                                // Send cient the inventory layout.
+        //                                ServerToClientMessage wm = ServerToClientMessage.CreateMessageSafe();
+        //                                // TODO: [LOW] the framework supports changing multiple items at once but we always send only one. Rethink if the whole inventory logic fits as it is now.
+        //                                MessageFormatter.CreateInventoryChangeMessage(c, InventoryChangeType.Pickup, new InventoryBag[] { newBag }, wm);
+        //                                c.MessageBuffer.Add(wm);
+        //                            }
+        //                        }
+        //                        else
+        //                        {
+        //                            ServerToClientMessage wm = ServerToClientMessage.CreateMessageSafe();
+        //                            MessageFormatter.CreateInvalidActionMessage(PlayerAction.Pickup, "Inventory full!", wm);
+        //                            c.MessageBuffer.Add(wm);
+        //                        }
+        //                    }
+        //                    catch (Exception ex)
+        //                    {
+        //                        Logger.Output(this, "ProcessMessage() msg: 'Pickup', item: {0}, character: {1}, exception: {2}, stacktrace {3}", entityId, c.CharacterId, ex.Message, ex.StackTrace);
+        //                        ServerToClientMessage wm = ServerToClientMessage.CreateMessageSafe();
+        //                        MessageFormatter.CreateInvalidActionMessage(PlayerAction.Pickup, "Unexpected error.", wm);
+        //                        c.MessageBuffer.Add(wm);
+        //                        isWrongTarget = true;
+        //                        reason = "Inventory error!";
+        //                    }
+        //                }
+        //                else
+        //                {
+        //                    isWrongTarget = true;
+        //                    reason = "Item is unreachable!";
+        //                }
+        //            }
+        //            else
+        //            {
+        //                isWrongTarget = true;
+        //                reason = "This can't be picked up!";
+        //            }
+        //        }
 
-                // Final notification
-                if (isWrongTarget)
-                {
-                    // Notify client that this is not possible.
-                    ServerToClientMessage wm = ServerToClientMessage.CreateMessageSafe(c.Sender);
-                    MessageFormatter.CreateInvalidTargetMessage(entityId, reason, wm);
-                    c.MessageBuffer.Add(wm);
-                }
-                else
-                {
-                    // Notify zone that item is gone.
-                    using (ServerToClientMessage wm = ServerToClientMessage.CreateMessageSafe())
-                    {
-                        MessageFormatter.CreateRemoveEntityFromZoneMessage(e, wm);
-                        AddMessageToLinkedZones(wm, e.CurrentZone);
-                        ServerToClientMessage.FreeSafe(wm);
-                    }
-                    zoneMngr.RemoveEntity(entityId);
-                }
-            }
-        }
+        //        // Final notification
+        //        if (isWrongTarget)
+        //        {
+        //            // Notify client that this is not possible.
+        //            ServerToClientMessage wm = ServerToClientMessage.CreateMessageSafe(c.Sender);
+        //            MessageFormatter.CreateInvalidTargetMessage(entityId, reason, wm);
+        //            c.MessageBuffer.Add(wm);
+        //        }
+        //        else
+        //        {
+        //            // Notify zone that item is gone.
+        //            using (ServerToClientMessage wm = ServerToClientMessage.CreateMessageSafe())
+        //            {
+        //                MessageFormatter.CreateRemoveEntityFromZoneMessage(e, wm);
+        //                AddMessageToLinkedZones(wm, e.CurrentZone);
+        //                ServerToClientMessage.FreeSafe(wm);
+        //            }
+        //            zoneMngr.RemoveEntity(entityId);
+        //        }
+        //    }
+        //}
 
         /// <summary>
         /// TODO: check multiple conditions to verify if logout is allowed like current game state, is the character attacked, etc.
@@ -497,86 +440,6 @@ namespace AsteriaWorldServer
         /// <param name="elapsedMilliseconds">Number of milliseconds passed since last turn.</param>
         private void OnNewTurn(float elapsedMilliseconds)
         {
-            // We act on character states set during message processing.
-            foreach (KeyValuePair<int, CharacterState> kvp in charStates)
-            {
-                CharacterState state = kvp.Value;
-                Character c = null;
-
-                // Try to get the character
-                MasterPlayerRecord mpr = mpt.GetByCharacterId(kvp.Key);
-                bool isCharacterOK = false;
-                if (mpr != null)
-                {
-                    // TODO: [WSE DEV] if wse keeps its own collection of client related objects (like the
-                    // charStates collection here) then such a collection must be kept in sync with the clients
-                    c = mpr.pCharacter as Character;
-                    if (c != null && !mpr.LogoutCharacterGranted && !mpr.LogoutCharacterRequested)
-                        isCharacterOK = true;
-                }
-
-                // Mark player for removal and skip.
-                if (!isCharacterOK)
-                {
-                    removeCharStates.Add(kvp.Key);
-                    continue;
-                }
-
-                // Process all character actions.
-                if (!c.IsDead)
-                {
-                    if (state.IsMoving)
-                    {
-                        // Calculate movement.
-                        Point start = c.Position;
-                        Point dest = state.MoveTarget;
-                        Point newPosition;
-                        int rotation = c.Rotation;
-
-                        // TODO: [MID] here we have to take into account all buffing/spell/equip/mount speed factors.
-                        //float velocity = (state.Movement == MoveType.Run ? runSpeed : walkSpeed);
-
-                        // TODO: [MID] implement variable movement speeds (ie. destination will always remain the center of a tile, but position can be more accurate.
-                        MoveResult mr = moveMngr.MoveTo(ref start, ref dest, elapsedMilliseconds, 1, ref rotation, out newPosition);
-                        c.Rotation = rotation;
-
-                        // Update position
-                        if (mr != MoveResult.Blocked)
-                            MoveEntity(c, ref newPosition);
-
-                        // Stop moving if blocked or arrived
-                        if (mr != MoveResult.Moved)
-                        {
-                            state.Stop();
-
-                            if (mr == MoveResult.BlockedMove || mr == MoveResult.Blocked)
-                            {
-                                // notify the client that move is blocked, the client app might want to play a sound or similar.
-                                ServerToClientMessage wm = ServerToClientMessage.CreateMessageSafe(c.Sender);
-                                MessageFormatter.CreateInvalidMoveMessage(c, ref dest, wm);
-                                c.MessageBuffer.Add(wm);
-                            }
-                        }
-
-                        // We must notify the whole zone of this movement.
-                        ServerToClientMessage wm2 = ServerToClientMessage.CreateMessageSafe(null);
-                        MessageFormatter.CreateMoveEntityMessage(c, wm2);
-                        AddMessageToLinkedZones(wm2, c.CurrentZone);
-                        ServerToClientMessage.FreeSafe(wm2);
-                    }
-
-                    // TODO: [HIGH] process other actions
-                }
-            }
-
-            // clean up states
-            if (removeCharStates.Count > 0)
-            {
-                foreach (int i in removeCharStates)
-                    charStates.Remove(i);
-
-                removeCharStates.Clear();
-            }
         }
         #endregion
 

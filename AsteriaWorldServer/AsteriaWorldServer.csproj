@@ -50,13 +50,11 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Entities\CharacterState.cs" />
     <Compile Include="ClientStateManager.cs" />
     <Compile Include="Config.cs" />
     <Compile Include="DalProvider.cs" />
     <Compile Include="Networking\InterServer.cs" />
     <Compile Include="Entities\EntityClassData.cs" />
-    <Compile Include="Entities\InventoryManager.cs" />
     <Compile Include="DataManager.cs" />
     <Compile Include="Messages\LowPriorityManager.cs" />
     <Compile Include="CharacterManager.cs" />
@@ -64,8 +62,6 @@
     <Compile Include="Messages\MessageFormatter.cs" />
     <Compile Include="Messages\MessageHandler.cs" />
     <Compile Include="Messages\MessageSender.cs" />
-    <Compile Include="Entities\MoveManager.cs" />
-    <Compile Include="Entities\MoveResult.cs" />
     <Compile Include="Networking\NetworkServer.cs" />
     <Compile Include="PlayerCache\FloodEntry.cs" />
     <Compile Include="PlayerCache\MasterPlayerRecord.cs" />

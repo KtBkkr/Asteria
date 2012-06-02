@@ -57,16 +57,12 @@ namespace AsteriaWorldServer
                 // Here we add all props used in the client.
                 character.Name = data[1];
                 character.TypeId = typeId;
-                character.Rotation = 0; // TODO: [LOW] have the player start out facing screen.
                 character.Position = (Point)DataManager.Singletone.WorldParameters["PlayerStartPoint"];
                 character.Gold = 0;
 
                 character.SetAttribute("_typeid", typeId);
                 character.SetAttribute("level", 0);
                 character.SetProperty("class", ecd.Name);
-                character.SetAttribute("movementoption", 1, "Movement Stance");
-                character.SetAttribute("weaponoption", 1, "Weapon Option");
-                character.InventorySize = ecd.InventorySize;
                 return true;
             }
             return false;

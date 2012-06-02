@@ -39,20 +39,13 @@ namespace AsteriaWorldServer
         private MySqlCommand cmdEditProperty;
         private MySqlCommand cmdGetProperties;
 
-        private MySqlCommand cmdDeleteInventory;
-
         private const int COMMAND_TIMEOUT = 5; // TODO: [LOW] do we need a parameter for timeout seconds?
 
         private const string PRP_GROUPS = "_groups";
         private const string PRP_POSITION = "_position";
-        private const string PRP_ROTATION = "_rotation";
         private const string PRP_GOLD = "_gold";
-        private const string PRP_INVENTORY = "_invBag";
 
-        private const string ATR_DEAD = "_isdead";
         private const string ATR_TYPEID = "_typeid";
-        private const string ATR_INVSIZEX = "_invSizeX";
-        private const string ATR_INVSIZEY = "_invSizeY";
         #endregion
 
         #region Constructors
@@ -152,12 +145,6 @@ namespace AsteriaWorldServer
             cmdGetProperties.CommandText = "SELECT * FROM character_properties WHERE character_id = @characterId";
             cmdGetProperties.CommandTimeout = COMMAND_TIMEOUT;
             cmdGetProperties.Parameters.Add("@characterId", MySqlDbType.Int32, 4);
-
-            // Command for deleting character inventory.
-            cmdDeleteInventory = new MySqlCommand();
-            cmdDeleteInventory.CommandText = String.Format("DELETE FROM character_properties WHERE character_id = @characterId AND property LIKE '{0}%'", PRP_INVENTORY);
-            cmdDeleteInventory.CommandTimeout = COMMAND_TIMEOUT;
-            cmdDeleteInventory.Parameters.Add("@characterId", MySqlDbType.Int32, 4);
         }
         #endregion
 
@@ -423,23 +410,8 @@ namespace AsteriaWorldServer
                         // Check if special attribute.
                         switch (name)
                         {
-                            case ATR_DEAD:
-                                if (value == 1)
-                                    character.IsDead = true;
-                                else
-                                    character.IsDead = false;
-                                break;
-
                             case ATR_TYPEID:
                                 character.TypeId = value;
-                                break;
-
-                            case ATR_INVSIZEX:
-                                character.InventorySize = new Size(value, character.InventorySize.Y);
-                                break;
-
-                            case ATR_INVSIZEY:
-                                character.InventorySize = new Size(character.InventorySize.X, value);
                                 break;
 
                             default:
@@ -486,15 +458,6 @@ namespace AsteriaWorldServer
 
                             continue;
                         }
-                        else if (name == PRP_ROTATION)
-                        {
-                            if (!string.IsNullOrEmpty(value))
-                                character.Rotation = Convert.ToInt32(value);
-                            else
-                                character.Rotation = 0;
-
-                            continue;
-                        }
                         else if (name == PRP_GOLD)
                         {
                             if (!string.IsNullOrEmpty(value))
@@ -502,16 +465,6 @@ namespace AsteriaWorldServer
                             else
                                 character.Gold = 0;
 
-                            continue;
-                        }
-                        else if (name.StartsWith(PRP_INVENTORY, StringComparison.InvariantCultureIgnoreCase))
-                        {
-                            if (!string.IsNullOrEmpty(value))
-                            {
-                                IStringFormattable ib = new InventoryBag();
-                                ib.FromFormatString(value);
-                                character.InventoryItems.Add((InventoryBag)ib);
-                            }
                             continue;
                         }
                         else if (name.StartsWith("_", StringComparison.InvariantCultureIgnoreCase))
@@ -575,31 +528,9 @@ namespace AsteriaWorldServer
                             cmdEditAttribute.ExecuteNonQuery();
                         }
 
-                        // The IsDead attribute needs to be saved as well.
-                        cmdEditAttribute.Parameters["@attributeName"].Value = ATR_DEAD;
-                        cmdEditAttribute.Parameters["@attributeValue"].Value = (character.IsDead ? 1 : 0);
-                        cmdEditAttribute.Parameters["@attributeDescription"].Value = "";
-                        cmdEditAttribute.ExecuteNonQuery();
-
-                        // The IsDead attribute needs to be saved as well.
-                        cmdEditAttribute.Parameters["@attributeName"].Value = ATR_DEAD;
-                        cmdEditAttribute.Parameters["@attributeValue"].Value = (character.IsDead ? 1 : 0);
-                        cmdEditAttribute.Parameters["@attributeDescription"].Value = "";
-                        cmdEditAttribute.ExecuteNonQuery();
-
                         // The TypeID attribute needs to be saved as well.
                         cmdEditAttribute.Parameters["@attributeName"].Value = ATR_TYPEID;
                         cmdEditAttribute.Parameters["@attributeValue"].Value = character.TypeId;
-                        cmdEditAttribute.Parameters["@attributeDescription"].Value = "";
-                        cmdEditAttribute.ExecuteNonQuery();
-
-                        // InventorySize
-                        cmdEditAttribute.Parameters["@attributeName"].Value = ATR_INVSIZEX;
-                        cmdEditAttribute.Parameters["@attributeValue"].Value = character.InventorySize.X;
-                        cmdEditAttribute.Parameters["@attributeDescription"].Value = "";
-                        cmdEditAttribute.ExecuteNonQuery();
-                        cmdEditAttribute.Parameters["@attributeName"].Value = ATR_INVSIZEY;
-                        cmdEditAttribute.Parameters["@attributeValue"].Value = character.InventorySize.Y;
                         cmdEditAttribute.Parameters["@attributeDescription"].Value = "";
                         cmdEditAttribute.ExecuteNonQuery();
                     }
@@ -637,54 +568,11 @@ namespace AsteriaWorldServer
                         cmdEditProperty.Parameters["@propertyDescription"].Value = "";
                         cmdEditProperty.ExecuteNonQuery();
 
-                        // Save the rotation
-                        cmdEditProperty.Parameters["@propertyName"].Value = PRP_ROTATION;
-                        cmdEditProperty.Parameters["@propertyValue"].Value = character.Rotation.ToString();
-                        cmdEditProperty.Parameters["@propertyDescription"].Value = "";
-                        cmdEditProperty.ExecuteNonQuery();
-
                         // Save gold
                         cmdEditProperty.Parameters["@propertyName"].Value = PRP_GOLD;
                         cmdEditProperty.Parameters["@propertyValue"].Value = character.Gold.ToString();
                         cmdEditProperty.Parameters["@propertyDescription"].Value = "";
                         cmdEditProperty.ExecuteNonQuery();
-                    }
-
-                    // Inventory requires special care not to destroy
-                    // user data if the system dies at this moment.
-                    MySqlTransaction transaction = conn.BeginTransaction();
-                    lock (cmdInsertProperty)
-                    {
-                        try
-                        {
-                            // Prepare everything first.
-                            cmdInsertProperty.Connection = conn;
-                            cmdInsertProperty.Parameters["@characterId"].Value = character.CharacterId;
-                            cmdInsertProperty.Transaction = transaction;
-
-                            cmdDeleteInventory.Connection = conn;
-                            cmdDeleteInventory.Parameters["@characterId"].Value = character.CharacterId;
-                            cmdDeleteInventory.Transaction = transaction;
-
-                            // Delete existing inventory and fill in new data.
-                            cmdDeleteInventory.ExecuteNonQuery();
-                            foreach (InventoryBag ib in character.InventoryItems)
-                            {
-                                cmdInsertProperty.Parameters["@propertyName"].Value = PRP_INVENTORY + ib.Position.ToString();
-                                cmdInsertProperty.Parameters["@propertyValue"].Value = ((IStringFormattable)ib).ToFormatString();
-                                cmdInsertProperty.Parameters["@propertyDescription"].Value = "";
-                                cmdInsertProperty.ExecuteNonQuery();
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            Logger.Output(this, "SaveCompleteCharacter exception while doing inventory save: {0}, stacktrace: {1}", ex.Message, ex.StackTrace);
-                            transaction.Rollback();
-                        }
-                        finally
-                        {
-                            transaction.Commit();
-                        }
                     }
                     character.LastSaved = DateTime.Now;
                 }
@@ -736,12 +624,6 @@ namespace AsteriaWorldServer
                         {
                             // Attributes with a "_" in front are not saved to the database,
                             // thus the WSE can't overwrite this.
-
-                            // The _isdead attribute needs to be saved as well.
-                            cmdInsertAttribute.Parameters["@attributeName"].Value = ATR_DEAD;
-                            cmdInsertAttribute.Parameters["@attributeValue"].Value = (character.IsDead ? 1 : 0);
-                            cmdInsertAttribute.Parameters["@attributeDescription"].Value = "";
-                            cmdInsertAttribute.ExecuteNonQuery();
 
                             // The _typeid attribute needs to be saved as well.
                             cmdInsertAttribute.Parameters["@attributeName"].Value = ATR_TYPEID;
@@ -800,11 +682,6 @@ namespace AsteriaWorldServer
                             cmdInsertProperty.Parameters["@propertyValue"].Value = character.Position.ToString();
                             cmdInsertProperty.Parameters["@propertyDescription"].Value = "";
                             cmdInsertProperty.ExecuteNonQuery();
-
-                            // Insert the rotation.
-                            cmdInsertProperty.Parameters["@propertyName"].Value = PRP_ROTATION;
-                            cmdInsertProperty.Parameters["@propertyValue"].Value = character.Rotation.ToString();
-                            cmdInsertProperty.Parameters["@propertyDescription"].Value = "";
                         }
                         catch (Exception ex)
                         {
@@ -905,13 +782,6 @@ namespace AsteriaWorldServer
                     sb.Append(";");
                     sb.Append(zone.Max.ToString());
                     c.SetProperty("zoneinfo", sb.ToString());
-
-                    // This is to allow characters saved to the DB without inventory information to be correctly initialized.
-                    if (c.InventorySize == Size.Zero)
-                    {
-                        EntityClassData ecd = DataManager.Singletone.GetPlayerClass(c.TypeId);
-                        c.InventorySize = ecd.InventorySize;
-                    }
 
                     // Store colon separated character data list.
                     wm.Data = c.ToFormatString();

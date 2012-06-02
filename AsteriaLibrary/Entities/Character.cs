@@ -59,21 +59,6 @@ namespace AsteriaLibrary.Entities
         public DateTime PlayerCreated { get; set; }
 
         /// <summary>
-        /// Gets the players inventory size.
-        /// </summary>
-        public Size InventorySize { get; set; }
-
-        /// <summary>
-        /// List of the items stored in the inventory.
-        /// </summary>
-        public List<InventoryBag> InventoryItems { get; private set; }
-
-        /// <summary>
-        /// True if the character is dead.
-        /// </summary>
-        public bool IsDead { get; set; }
-
-        /// <summary>
         /// The team Id's this character participates in.
         /// Temporary membership, like a party or raid.
         /// </summary>
@@ -103,7 +88,6 @@ namespace AsteriaLibrary.Entities
             TeamsMember = new List<int>();
             GroupsMember = new List<int>();
 
-            this.InventoryItems = new List<InventoryBag>();
             this.AccountId = accountId;
             this.CharacterId = characterId;
             this.Name = name;
@@ -138,16 +122,6 @@ namespace AsteriaLibrary.Entities
             sb.Append(":");
             sb.Append(CharacterId);
             sb.Append(":");
-
-            sb.Append(InventorySize.ToString());
-            sb.Append(":");
-            sb.Append(InventoryItems.Count);
-            sb.Append(":");
-            foreach (InventoryBag ib in this.InventoryItems)
-            {
-                sb.Append(((IStringFormattable)ib).ToFormatString());
-                sb.Append(":");
-            }
             return sb.ToString();
         }
 
@@ -159,17 +133,6 @@ namespace AsteriaLibrary.Entities
             elements++;
             AccountId = int.Parse(split[elements++]);
             CharacterId = int.Parse(split[elements++]);
-
-            //  inventory
-            InventoryItems = new List<InventoryBag>();
-            Size size = (Size)split[elements++];
-            int inventoryCount = int.Parse(split[elements++]);
-            for (int i = 0; i < inventoryCount; i++)
-            {
-                InventoryBag ib = new InventoryBag();
-                ((IStringFormattable)ib).FromFormatString(split[elements++]);
-                this.InventoryItems.Add(ib);
-            }
         }
         #endregion
     }

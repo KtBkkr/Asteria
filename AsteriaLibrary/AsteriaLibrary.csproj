@@ -59,8 +59,6 @@
     <Compile Include="Entities\Entity.cs" />
     <Compile Include="Entities\EntityAttribute.cs" />
     <Compile Include="Entities\EntityProperty.cs" />
-    <Compile Include="Entities\InventoryBag.cs" />
-    <Compile Include="Entities\Structure.cs" />
     <Compile Include="Math\Point.cs" />
     <Compile Include="Math\Size.cs" />
     <Compile Include="Math\Vector.cs" />
