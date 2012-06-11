@@ -50,14 +50,14 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ChatProcessor.cs" />
     <Compile Include="ClientStateManager.cs" />
     <Compile Include="Config.cs" />
     <Compile Include="DalProvider.cs" />
+    <Compile Include="EntityData.cs" />
     <Compile Include="Networking\InterServer.cs" />
-    <Compile Include="Entities\EntityClassData.cs" />
     <Compile Include="DataManager.cs" />
     <Compile Include="Messages\LowPriorityManager.cs" />
-    <Compile Include="CharacterManager.cs" />
     <Compile Include="GameProcessor.cs" />
     <Compile Include="Messages\MessageFormatter.cs" />
     <Compile Include="Messages\MessageHandler.cs" />
@@ -74,6 +74,8 @@
     <Compile Include="ThreadedComponent.cs" />
     <Compile Include="Messages\TurnManager.cs" />
     <Compile Include="WorldServer.cs" />
+    <Compile Include="Zones\Zone.cs" />
+    <Compile Include="Zones\ZoneManager.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\AsteriaLibrary\AsteriaLibrary.csproj">
@@ -84,9 +86,11 @@
   <ItemGroup>
     <Content Include="Data\Entities.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <SubType>Designer</SubType>
     </Content>
     <Content Include="Data\WorldData.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <SubType>Designer</SubType>
     </Content>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

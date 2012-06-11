@@ -27,6 +27,7 @@ namespace AsteriaWorldServer.Messages
         #region Fields
         private ServerContext context;
         private DalProvider dal;
+        private ChatProcessor chatProcessor;
 
         ServerToServerMessageSerializer serializer = new ServerToServerMessageSerializer();
         byte[] bytesOut;
@@ -45,6 +46,7 @@ namespace AsteriaWorldServer.Messages
         {
             this.context = context;
             this.dal = dal;
+            this.chatProcessor = new ChatProcessor(context);
         }
         #endregion
 
@@ -81,7 +83,7 @@ namespace AsteriaWorldServer.Messages
                 msg = QueueManager.ChatQueueReadWrite;
                 if (msg != null)
                 {
-                    HandleChat(msg);
+                    chatProcessor.HandleChatMessage(msg);
                     isIdle = false;
                 }
 
@@ -109,15 +111,6 @@ namespace AsteriaWorldServer.Messages
             Logger.Output(this, "Worker thread: {0} exited!", wt.Thread.Name);
         }
 
-        private void HandleChat(ClientToServerMessage msg)
-        {
-            Character character = (Character)context.Mpt.GetByCharacterId(msg.CharacterId).pCharacter;
-            int channel = Convert.ToInt32(msg.Data.Split('|')[0]);
-            int dest = Convert.ToInt32(msg.Data.Split('|')[1]);
-            string message = msg.GameData;
-            context.GameProcessor.ProcessChatMessage(character, channel, dest, message);
-        }
-
         /// <summary>
         /// Handles character management messages.
         /// Process: GetCharacterList, DeleteCharacter, CreateCharacter, StartCharacter, and PlayerLogoutRequest.
@@ -136,7 +129,6 @@ namespace AsteriaWorldServer.Messages
             switch (msg.MessageType)
             {
                 case MessageType.C2S_Authenticate:
-
                     Logger.Output(this, "Unexpected Authenticate message, account: {0}, secret: {1}..", mpr.AccountId, msg.Data);
                     context.Mpt.Disconnect(msg.Sender, "Unexpected message", 15000);
                     break;

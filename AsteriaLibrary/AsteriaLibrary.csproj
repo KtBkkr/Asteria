@@ -81,8 +81,6 @@
     <Compile Include="Shared\IStringFormattable.cs" />
     <Compile Include="Shared\PlayerAction.cs" />
     <Compile Include="Shared\WorldServerInfo.cs" />
-    <Compile Include="Zones\Zone.cs" />
-    <Compile Include="Zones\ZoneManager.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

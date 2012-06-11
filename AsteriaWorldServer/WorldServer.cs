@@ -117,16 +117,11 @@ namespace AsteriaWorldServer
 
                 // Create the zone manager.
                 Logger.Output(this, "Creating zone manager..");
-                context.ZoneManager = new ZoneManager(true);
+                context.ZoneManager = new ZoneManager(context);
 
                 // Now load all static predefined entities.
                 Logger.Output(this, "Loading static entities..");
                 dMngr.LoadStaticEntities(context.ZoneManager);
-
-                // Create character manager, normally such a manager requires a DB connection
-                // for handling additional data loading/saving.
-                Logger.Output(this, "Creating character manager..");
-                context.CharacterManager = new CharacterManager(context.Css);
 
                 // Create the game processor for handling messages.
                 Logger.Output(this, "Creating game processor..");
@@ -217,7 +212,6 @@ namespace AsteriaWorldServer
                 Logger.Output(this, "Creating client state manager..");
                 csm = new ClientStateManager(context);
                 csm.Start(1);
-                networkServer.PlayerDisconnect += csm.NotifyDisconnect;
 
                 // ClientToServerMessage deserializer
                 Logger.Output(this, "Creating message handler..");
@@ -271,7 +265,7 @@ namespace AsteriaWorldServer
             if (networkServer != null)
                 networkServer.Stop();
 
-            // TODO: Implement saving of all persistant data.
+            context.ZoneManager.SaveAllZones();
         }
 
         /// <summary>

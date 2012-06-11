@@ -56,7 +56,12 @@ namespace AsteriaLibrary.Entities
         /// <summary>
         /// Player creation time.
         /// </summary>
-        public DateTime PlayerCreated { get; set; }
+        public DateTime Created { get; set; }
+
+        /// <summary>
+        /// Amount of currency the character has.
+        /// </summary>
+        public int Gold { get; set; }
 
         /// <summary>
         /// The team Id's this character participates in.
@@ -106,10 +111,32 @@ namespace AsteriaLibrary.Entities
         #endregion
 
         #region Methods
-        /// <summary>
-        /// Generic character format for sending to clients.
-        /// </summary>
-        /// <returns></returns>
+        public override void PrepareData()
+        {
+            SetAttribute("_gold", Gold);
+
+            string groups = "";
+            foreach (int value in GroupsMember)
+                groups += value.ToString() + ":";
+            SetProperty("_groups", groups);
+
+            base.PrepareData();
+        }
+
+        public override void LoadData()
+        {
+            Gold = GetAttribute("_gold");
+
+            string[] groups = GetProperty("_groups").Split(':');
+            foreach (string g in groups)
+            {
+                if (!string.IsNullOrEmpty(g))
+                    GroupsMember.Add(Convert.ToInt32(g));
+            }
+
+            base.LoadData();
+        }
+
         public override string ToFormatString()
         {
             StringBuilder sb = new StringBuilder();
@@ -117,7 +144,6 @@ namespace AsteriaLibrary.Entities
 
             //  We must append instead of prepending data, 
             //  else we could not extract an Entity instance from a character string - which must be possible!
-            sb.Append(":");
             sb.Append(AccountId);
             sb.Append(":");
             sb.Append(CharacterId);
@@ -130,7 +156,6 @@ namespace AsteriaLibrary.Entities
             int elements;
             FromFormatString(data, out elements);
             string[] split = data.Split(':');
-            elements++;
             AccountId = int.Parse(split[elements++]);
             CharacterId = int.Parse(split[elements++]);
         }

@@ -15,18 +15,16 @@ namespace AsteriaLibrary.Entities
         #region Fields
         private int id;
         private int typeId;
+        private string name;
+        private int zone;
         private Point position;
+        private int owner;
 
         protected Dictionary<string, EntityAttribute> attributes;
         protected Dictionary<string, EntityProperty> properties;
         #endregion
 
         #region Properties
-        /// <summary>
-        /// Gets or sets the entities name.
-        /// </summary>
-        public string Name { get; set; }
-
         /// <summary>
         /// Gets the entities unique and global ID.
         /// </summary>
@@ -46,7 +44,25 @@ namespace AsteriaLibrary.Entities
         }
 
         /// <summary>
-        /// Gets or sets the entities position.
+        /// Gets or sets the entities name.
+        /// </summary>
+        public string Name
+        {
+            get { return name; }
+            set { name = value; }
+        }
+
+        /// <summary>
+        /// Gets or sets the current zone.
+        /// </summary>
+        public int Zone
+        {
+            get { return zone; }
+            set { zone = value; }
+        }
+
+        /// <summary>
+        /// Gets or sets the entities position within the zone.
         /// </summary>
         public Point Position
         {
@@ -54,25 +70,11 @@ namespace AsteriaLibrary.Entities
             set { position = value; }
         }
 
-        /// <summary>
-        /// Gets or sets the gold amount.
-        /// </summary>
-        public uint Gold { get; set; }
-
-        /// <summary>
-        /// Gets or sets the current zone.
-        /// </summary>
-        public int CurrentZone { get; set; }
-
-        /// <summary>
-        /// Gets or sets the Zone this entity was during the last turn.
-        /// </summary>
-        public int LastZone { get; set; }
-
-        /// <summary>
-        /// This holds a reference to a scene node or similar data.
-        /// </summary>
-        public object Tag { get; set; }
+        public int Owner
+        {
+            get { return owner; }
+            set { owner = value; }
+        }
 
         /// <summary>
         /// Returns a list of attributes.
@@ -112,6 +114,7 @@ namespace AsteriaLibrary.Entities
             this.id = id;
             this.typeId = typeId;
             this.Name = name;
+            this.owner = -1;
 
             attributes = new Dictionary<string, EntityAttribute>();
             properties = new Dictionary<string, EntityProperty>();
@@ -141,20 +144,9 @@ namespace AsteriaLibrary.Entities
         }
 
         /// <summary>
-        /// Returns an entity attribute.
-        /// </summary>
-        public EntityAttribute GetAttribute(string name)
-        {
-            if (attributes.ContainsKey(name))
-                return attributes[name];
-
-            return null;
-        }
-
-        /// <summary>
         /// Returns an entity attribute value.
         /// </summary>
-        public int GetAttributeValue(string name)
+        public int GetAttribute(string name)
         {
             if (attributes.ContainsKey(name))
                 return attributes[name].Value;
@@ -191,20 +183,9 @@ namespace AsteriaLibrary.Entities
         }
 
         /// <summary>
-        /// Returns an entity property.
-        /// </summary>
-        public EntityProperty GetProperty(string name)
-        {
-            if(properties.ContainsKey(name))
-                return properties[name];
-
-            return null;
-        }
-
-        /// <summary>
         /// Returns an entity property value.
         /// </summary>
-        public string GetPropertyValue(string name)
+        public string GetProperty(string name)
         {
             if (properties.ContainsKey(name))
                 return properties[name].Value;
@@ -240,33 +221,21 @@ namespace AsteriaLibrary.Entities
                 properties.Add(name, new EntityProperty(name, description, value));
         }
 
+        #region Database
         /// <summary>
-        /// Returns an unknown character value.
+        /// Copies all entity specific fields into attributes/properties.
         /// </summary>
-        public object GetCharacterValue(string name)
+        public virtual void PrepareData()
         {
-            if (attributes.ContainsKey(name))
-                return attributes[name].Value;
-
-            if (properties.ContainsKey(name))
-                return properties[name].Value;
-#if DEBUG
-            throw (new Exception("Character value not found: " + name));
-#else
-            return null;
-#endif
         }
 
-        public void SetCharacterValue(string name, object value, string description)
+        /// <summary>
+        /// Reads all special attributes/properties and sets the appropriate fields values.
+        /// </summary>
+        public virtual void LoadData()
         {
-            if (value.GetType() == typeof(int))
-                SetAttribute(name, (int)value, description);
-            else if (value.GetType() == typeof(string))
-                SetProperty(name, (string)value, description);
-#if DEBUG
-            throw (new Exception("Character value is neither int nor string: " + name));
-#endif
         }
+        #endregion
 
         #region IStringFormattable Members
         /// <summary>
@@ -283,32 +252,39 @@ namespace AsteriaLibrary.Entities
             sb.Append(":");
             sb.Append(Name);
             sb.Append(":");
-            sb.Append(CurrentZone);
+            sb.Append(Zone);
             sb.Append(":");
             sb.Append(Position.ToString());
             sb.Append(":");
 
-            sb.Append(Attributes.Count);
-            sb.Append(":");
-
-            foreach (KeyValuePair<string, EntityAttribute> pair in Attributes)
+            int attribCount = 0;
+            string attribString = "";
+            foreach (string key in attributes.Keys)
             {
-                sb.Append(pair.Key);
-                sb.Append(",");
-                sb.Append(pair.Value.Value);
-                sb.Append(":");
-            }
+                if (key.StartsWith("_"))
+                    continue;
 
-            sb.Append(Properties.Count);
+                attribCount++;
+                attribString += String.Format("{0},{1}:", key, attributes[key].Value);
+            }
+            sb.Append(attribCount);
             sb.Append(":");
+            sb.Append(attribString);
 
-            foreach (KeyValuePair<string, EntityProperty> pair in Properties)
+            attribCount = 0;
+            attribString = "";
+            foreach (string key in properties.Keys)
             {
-                sb.Append(pair.Key);
-                sb.Append(",");
-                sb.Append(pair.Value.Value);
-                sb.Append(":");
+                if (key.StartsWith("_"))
+                    continue;
+
+                attribCount++;
+                attribString += String.Format("{0},{1}:", key, properties[key].Value);
             }
+            sb.Append(attribCount);
+            sb.Append(":");
+            sb.Append(attribString);
+
             return sb.ToString();
         }
 
@@ -332,11 +308,10 @@ namespace AsteriaLibrary.Entities
             id = int.Parse(elements[counter++]);
             typeId = int.Parse(elements[counter++]);
             Name = elements[counter++];
-            CurrentZone = int.Parse(elements[counter++]);
+            Zone = int.Parse(elements[counter++]);
             position = (Point)elements[counter++];
 
             int attributeCount = int.Parse(elements[counter++]);
-
             for (int i = 0; i < attributeCount; i++)
             {
                 int comma = elements[counter].IndexOf(',');
@@ -348,7 +323,6 @@ namespace AsteriaLibrary.Entities
             }
 
             int propertyCount = int.Parse(elements[counter++]);
-
             for (int i = 0; i < propertyCount; i++)
             {
                 int comma = elements[counter].IndexOf(',');

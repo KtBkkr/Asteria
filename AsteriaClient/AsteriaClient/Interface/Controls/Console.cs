@@ -345,7 +345,7 @@ namespace AsteriaClient.Interface.Controls
                             if ((messageFormat & ConsoleMessageFormats.TimeStamp) == ConsoleMessageFormats.TimeStamp)
                                 pre = string.Format("[{0}]", ((ConsoleMessage)b[i]).Time.ToLongTimeString()) + pre;
 
-                            if (pre != "") msg = pre + ": " + msg;
+                            if (pre != "") msg = pre + " " + msg;
 
                             string line = "";
                             string[] words = msg.Split(" ".ToCharArray());

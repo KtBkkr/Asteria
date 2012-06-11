@@ -2,13 +2,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using AsteriaClient.Interface.Controls;
+using AsteriaClient.Zones;
 using AsteriaLibrary.Client;
 using AsteriaLibrary.Entities;
 using AsteriaLibrary.Messages;
 using AsteriaLibrary.Shared;
 using Lidgren.Network;
 using Microsoft.Xna.Framework;
-using AsteriaClient.Interface.Controls;
 
 namespace AsteriaClient.Network
 {
@@ -20,6 +21,24 @@ namespace AsteriaClient.Network
         private WorldConnection connection;
         private Character playerCharacter;
         private Dictionary<int, Entity> worldEntities;
+        private ZoneManager zoneManager;
+        #endregion
+
+        #region Properties
+        public Character PlayerCharacter
+        {
+            get { return playerCharacter; }
+        }
+
+        public ZoneManager ZoneManager
+        {
+            get { return zoneManager; }
+        }
+
+        public Dictionary<int, Entity> WorldEntities
+        {
+            get { return worldEntities; }
+        }
         #endregion
 
         #region Constructors
@@ -28,6 +47,7 @@ namespace AsteriaClient.Network
             this.context = context;
 
             worldEntities = new Dictionary<int, Entity>();
+            zoneManager = new ZoneManager();
         }
         #endregion
 
@@ -67,7 +87,7 @@ namespace AsteriaClient.Network
             }
             else if (connection.State == WorldConnection.WorldConnectionState.InGame)
             {
-                //StartGame();
+                playerCharacter = new Character(connection.WorldClient.OwnCharacter);
             }
         }
 
@@ -90,30 +110,34 @@ namespace AsteriaClient.Network
         private void HandleMessageReceived(MessageType messageType)
         {
             ServerToClientMessage wm = connection.GetMessage(messageType);
+            if (wm == null)
+                return;
 
-            if (messageType == MessageType.S2C_ZoneMessage)
+            switch (messageType)
             {
-                if (wm != null)
-                {
+                case MessageType.S2C_ZoneMessage:
                     HandleZoneMessage(wm);
-                    //DisplayWorldMessage(wm);
-                }
-            }
-            else
-            {
-                Logger.Output(this, "Non-Zone message received: {0}", messageType);
-                if (messageType == MessageType.S2C_ChatMessage)
-                {
-                    HandleChatMessage(wm);
-                }
+                    break;
+
+                case MessageType.S2C_PlayerLoggedOut:
+                    HandlePlayerLogout(wm);
+                    break;
+
+                case MessageType.S2C_CharacterLoggedOut:
+                    HandleCharacterLogout(wm);
+                    break;
+
+                default:
+                    Logger.Output(this, "Non-Zone message received: {0}", messageType);
+                    if (messageType == MessageType.S2C_ChatMessage)
+                        HandleChatMessage(wm);
+                    break;
             }
             ServerToClientMessage.FreeSafe(wm);
         }
 
         private void HandleZoneMessage(ServerToClientMessage wm)
         {
-            Entity e;
-
             // Check action and act
             PlayerAction a = (PlayerAction)wm.Code;
             switch (a)
@@ -123,7 +147,12 @@ namespace AsteriaClient.Network
                 case PlayerAction.RemoveEntity:
 
                 case PlayerAction.AddZone:
+                    HandleAddZone(wm);
+                    break;
+
                 case PlayerAction.RemoveZone:
+                    HandleRemoveZone(wm);
+                    break;
 
                 case PlayerAction.Teleport:
 
@@ -131,6 +160,73 @@ namespace AsteriaClient.Network
                     break;
             }
             Logger.Output(this, "HandleZoneMessage() type {0}", a);
+        }
+
+        #region Zone Message Handling
+        private void HandleAddZone(ServerToClientMessage wm)
+        {
+            string[] data = wm.Data.Remove(0, 1).Split('#');
+            for (int i = 0; i < data.Length; i++)
+            {
+                string key = data[i].Substring(0, 1);
+                string value = data[i].Substring(1, data[i].Length - 1);
+                if (key == "Z")
+                {
+                    // id:name:width:height
+                    string[] zoneInfo = value.Split(':');
+                    int id = Convert.ToInt32(zoneInfo[0]);
+                    int width = Convert.ToInt32(zoneInfo[2]);
+                    int height = Convert.ToInt32(zoneInfo[3]);
+                    zoneManager.AddZone(id, zoneInfo[1], width, height);
+                    Logger.Output(this, "HandleAddZone() Zone (Id:{0}, Name:{1}, Size:{2}x{3}", id, zoneInfo[1], width, height);
+                }
+                else if (key == "C")
+                {
+                }
+                else if (key == "E")
+                {
+                    Entity entity = new Entity(value);
+                    worldEntities.Add(entity.Id, entity);
+                    Logger.Output(this, "HandleAddZone() Entity (Id:{0}, Type:{1}, Pos:{2}", entity.Id, entity.TypeId, entity.Position);
+                }
+            }
+        }
+
+        private void HandleRemoveZone(ServerToClientMessage wm)
+        {
+            string[] zones = wm.Data.Split(':');
+            for (int i = 0; i < zones.Length; i++)
+            {
+                // Make sure the zone exists.
+                Zone zone = zoneManager.GetZone(Convert.ToInt32(zones[i]));
+                if (zone == null)
+                    continue;
+
+                // Compile entities then remove them.
+                List<int> removeEntities = new List<int>();
+                foreach (KeyValuePair<int, Entity> e in worldEntities)
+                {
+                    if (e.Value.Zone == zone.Id)
+                        removeEntities.Add(e.Key);
+                }
+
+                foreach (int e in removeEntities)
+                    worldEntities.Remove(e);
+
+                // Finally remove the zone.
+                zoneManager.RemoveZone(zone.Id);
+            }
+        }
+        #endregion
+
+        private void HandlePlayerLogout(ServerToClientMessage wm)
+        {
+        }
+
+        private void HandleCharacterLogout(ServerToClientMessage wm)
+        {
+            worldEntities.Clear();
+            zoneManager.RemoveAllZones();
         }
 
         private void HandleChatMessage(ServerToClientMessage wm)
@@ -151,8 +247,7 @@ namespace AsteriaClient.Network
             foreach (Character achar in connection.CharacterList)
             {
                 if (achar.AccountId > 0 && achar.CharacterId > 0)
-                    context.Gui.charsList.Items.Add(String.Format("ID:{0} - LVL:{1} - CLASS:{2} - NAME:{3}",
-                        achar.CharacterId, achar.GetAttributeValue("level"), achar.GetPropertyValue("class"), achar.Name));
+                    context.Gui.charsList.Items.Add(String.Format("ID:{0} - NAME:{1}", achar.CharacterId, achar.Name));
                 else
                     Logger.Output(this, "Received invalid character list data!");
             }
@@ -184,12 +279,6 @@ namespace AsteriaClient.Network
         }
         #endregion
 
-        private void Start()
-        {
-            playerCharacter = new Character(connection.WorldClient.OwnCharacter);
-            //context.Gui.InitCharacterInfo();
-        }
-
         public void Logout()
         {
             if (connection.State == WorldConnection.WorldConnectionState.InGame)
@@ -197,10 +286,7 @@ namespace AsteriaClient.Network
                 ClientToServerMessage pm = new ClientToServerMessage();
                 pm.MessageType = MessageType.C2S_CharacterLogoutRequest;
                 pm.Action = (int)PlayerAction.None;
-                pm.AccountId = connection.AccountId;
-                pm.CharacterId = connection.CharacterId;
-                pm.DeliveryMethod = NetDeliveryMethod.ReliableUnordered;
-                connection.WorldClient.SendMessage(pm);
+                SendMessage(pm);
             }
         }
 
@@ -211,10 +297,7 @@ namespace AsteriaClient.Network
                 ClientToServerMessage pm = new ClientToServerMessage();
                 pm.MessageType = MessageType.C2S_PlayerLogoutRequest;
                 pm.Action = (int)PlayerAction.None;
-                pm.AccountId = connection.AccountId;
-                pm.CharacterId = connection.CharacterId;
-                pm.DeliveryMethod = NetDeliveryMethod.ReliableUnordered;
-                connection.WorldClient.SendMessage(pm);
+                SendMessage(pm);
             }
         }
 

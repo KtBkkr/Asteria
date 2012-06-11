@@ -7,8 +7,8 @@ using AsteriaLibrary.Math;
 using AsteriaLibrary.Messages;
 using AsteriaLibrary.Shared;
 using AsteriaLibrary.Zones;
-using Lidgren.Network;
 using AsteriaWorldServer.PlayerCache;
+using Lidgren.Network;
 
 namespace AsteriaWorldServer.Messages
 {
@@ -94,7 +94,7 @@ namespace AsteriaWorldServer.Messages
                 sb.Append(":");
                 sb.Append(zone.Height);
 
-                foreach (Entity entity in zone.Entities)
+                foreach (Entity entity in zone.AllEntities)
                 {
                     if (entity is Character)
                     {

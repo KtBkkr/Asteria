@@ -15,7 +15,6 @@ namespace AsteriaWorldServer
         #region Fields
         public string Css;
         public ZoneManager ZoneManager;
-        public CharacterManager CharacterManager;
         public GameProcessor GameProcessor;
         public DalProvider Dal;
         public MasterPlayerTable Mpt;

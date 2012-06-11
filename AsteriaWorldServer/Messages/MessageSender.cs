@@ -108,7 +108,7 @@ namespace AsteriaWorldServer.Messages
                                     else
                                         e = new Character(wm.Data);
 
-                                    Logger.Output(this, "Turn {0}: Sent ZoneMessage ({1}) to {2} -> Entity {3}, Position: {4}, Zone: {5}", wm.TurnNumber, pa, destCharacter.Name, e.Id, e.Position, e.CurrentZone);
+                                    Logger.Output(this, "Turn {0}: Sent ZoneMessage ({1}) to {2} -> Entity {3}, Position: {4}, Zone: {5}", wm.TurnNumber, pa, destCharacter.Name, e.Id, e.Position, e.Zone);
                                 }
                                 else if (pa == PlayerAction.MoveEntity)
                                 {

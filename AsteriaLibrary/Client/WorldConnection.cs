@@ -319,6 +319,9 @@ namespace AsteriaLibrary.Client
 #endif
             if (messageType == MessageType.S2C_CharacterLoggedOut || messageType == MessageType.S2C_PlayerLoggedOut)
             {
+                if (WorldMessageReceived != null)
+                    WorldMessageReceived(messageType);
+
                 worldClient.DeleteMessage(messageType);
                 StopReceiving();
                 State = WorldConnectionState.CharacterManagement;

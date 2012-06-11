@@ -13,20 +13,12 @@ using Lidgren.Network;
 namespace AsteriaWorldServer.Networking
 {
     /// <summary>
-    /// Disconnect handler.
-    /// </summary>
-    /// <param name="ep"></param>
-    public delegate void ClientDisconnectHandler(IPEndPoint ep);
-
-    /// <summary>
     /// Low level networking handling based on the lidgren library.
     /// This class contains two unrelated parts: receiver and dispatcher.
     /// </summary>
     sealed class NetworkServer : ThreadedComponent
     {
         #region Fields
-        public event ClientDisconnectHandler PlayerDisconnect;
-
         private NetServer netServer;
         private ServerContext context;
         private MasterPlayerTable mpt;
@@ -118,11 +110,23 @@ namespace AsteriaWorldServer.Networking
                             {
                                 Logger.Output(this, "Client: {0} disconnected!", sender.RemoteEndpoint.ToString());
 
-                                // On disconnect we send a notification message to notify disconnects.
-                                // A client can disconnect because of multiple reasons like network failures, player disconnects,
-                                // or server disconnect request.
-                                if (PlayerDisconnect != null)
-                                    PlayerDisconnect(sender.RemoteEndpoint);
+                                // A client can disconnect because of multiple reasons like network failures, player disconnects, or server disconnect request.
+                                MasterPlayerRecord mpr = context.Mpt.GetByEndPoint(sender.RemoteEndpoint);
+                                if (mpr != null)
+                                {
+                                    if (mpr.State == ClientState.InWorld)
+                                    {
+                                        mpr.LogoutCharacterRequested = true;
+                                        mpr.LogoutClientRequested = true;
+                                    }
+                                    else
+                                    {
+                                        mpr.LogoutCharacterRequested = true;
+                                        mpr.LogoutCharacterGranted = true;
+                                        mpr.LogoutClientRequested = true;
+                                    }
+                                    mpr.State = ClientState.Disconnecting;
+                                }
                             }
                             else
                                 Logger.Output(this, "Client: {0}, new status: {1}.", sender.RemoteEndpoint.ToString(), sender.Status);

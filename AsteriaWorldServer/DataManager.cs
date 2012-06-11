@@ -7,7 +7,6 @@ using System.Xml.Linq;
 using AsteriaLibrary.Entities;
 using AsteriaLibrary.Math;
 using AsteriaLibrary.Zones;
-using AsteriaWorldServer.Entities;
 using AsteriaLibrary.Shared;
 
 namespace AsteriaWorldServer
@@ -18,8 +17,7 @@ namespace AsteriaWorldServer
     public class DataManager
     {
         #region Fields
-        private List<EntityClassData> playerClasses = new List<EntityClassData>();
-        private List<EntityClassData> entityClasses = new List<EntityClassData>();
+        private List<EntityData> entities = new List<EntityData>();
         private Dictionary<string, string> worldParameters = new Dictionary<string, string>();
 
         private static readonly DataManager singletone = new DataManager();
@@ -32,14 +30,9 @@ namespace AsteriaWorldServer
         public static DataManager Singletone { get { return singletone; } }
 
         /// <summary>
-        /// Returns the player classes defined in the xml.
+        /// Returns the entities defined in the xml.
         /// </summary>
-        public IEnumerable<EntityClassData> PlayerClasses { get { return playerClasses; } }
-
-        /// <summary>
-        /// Returns the player classes defined in the xml.
-        /// </summary>
-        public IEnumerable<EntityClassData> EntityClasses { get { return entityClasses; } }
+        public IEnumerable<EntityData> Entities { get { return entities; } }
 
         /// <summary>
         /// Returns the dictionary with world parameters.
@@ -68,67 +61,36 @@ namespace AsteriaWorldServer
                 // Prepare all classes
                 XDocument xDocEntities = XDocument.Load("Data/Entities.xml");
 
-                IEnumerable<EntityClassData> q = from c in xDocEntities.Elements("XnaContent").Elements("Entity")
-                                                 select new EntityClassData()
+                IEnumerable<EntityData> q = from c in xDocEntities.Elements("XnaContent").Elements("Entity")
+                                            select new EntityData()
                                                  {
                                                      TypeId = Convert.ToInt32(c.Element("TypeId").Value),
-                                                     Name = (string)c.Element("ClassName").Value,
+                                                     Name = (string)c.Element("Name").Value,
                                                      Description = (string)c.Element("Description").Value,
                                                  };
 
-                // Fill attributes and PCD list
-                foreach (EntityClassData ecd in q)
+                // Fill attributes and add to list
+                foreach (EntityData ed in q)
                 {
                     var node = from c in xDocEntities.Elements("XnaContent").Elements("Entity")
-                               where Convert.ToInt32(c.Element("TypeId").Value) == ecd.TypeId
+                               where Convert.ToInt32(c.Element("TypeId").Value) == ed.TypeId
                                select c;
 
-                    if (ecd.TypeId < 501)
-                    {
-                        // Player Classes
-                        var attributes = from a in node.Elements("Attributes").Descendants()
-                                         select new { Name = a.Name.LocalName, Value = a.Value };
+                    // Attributes
+                    var attributes = from a in node.Elements("Attributes").Descendants()
+                                     select new { Name = a.Name.LocalName, Value = a.Value };
 
-                        foreach (var v in attributes)
-                            ecd.DefaultAttributes.Add(v.Name, Convert.ToInt32(v.Value));
+                    foreach (var v in attributes)
+                        ed.Attributes.Add(v.Name, Convert.ToInt32(v.Value));
 
-                        string sex = (from a in node.Elements("Sex") select (string)a.Value).First();
-                        ecd.Sex = sex;
+                    // Properties
+                    var properties = from a in node.Elements("Properties").Descendants()
+                                     select new { Name = a.Name.LocalName, Value = a.Value };
 
-                        string race = (from a in node.Elements("Race") select (string)a.Value).First();
-                        ecd.Race = race;
+                    foreach (var v in attributes)
+                        ed.Properties.Add(v.Name, v.Value);
 
-                        string size = (from a in node.Elements("Inventory") select (string)a.Value).First();
-                        ecd.InventorySize = (Size)size;
-                        ecd.SlotSize = Size.Zero;
-                        playerClasses.Add(ecd);
-                    }
-                    else
-                    {
-                        // Other entities
-                        string st = (from a in node.Elements("InventorySlots") select (string)a.Value).First();
-                        if (st == "0")
-                            ecd.SlotSize = Size.Zero;
-                        else
-                            ecd.SlotSize = (Size)st;
-
-                        var maxStacks = from a in node.Elements("InventorySlots")
-                                        where a.Attribute("maxStack") != null
-                                        select a.Attribute("maxStack");
-
-                        if (maxStacks.Count() > 0)
-                            ecd.SlotStacks = int.Parse(maxStacks.First().Value);
-                        else
-                            ecd.SlotStacks = 0;
-
-                        var attributes = from a in node.Elements("Attributes").Descendants()
-                                         select new { Name = a.Name.LocalName, Value = a.Value };
-
-                        foreach (var v in attributes)
-                            ecd.ActionAttributes.Add(v.Name, v.Value);
-
-                        entityClasses.Add(ecd);
-                    }
+                    entities.Add(ed);
                 }
 
                 XmlNodeList nodes;
@@ -182,38 +144,38 @@ namespace AsteriaWorldServer
                 Point p = (Point)location;
                 e.Position = p;
 
-                if (node.Attributes["Amount"] != null)
-                {
-                    // TODO: Amount node is currently only used for gold. If there are more items which canhave an amount
-                    // we must specify how to implement this.
-                    e.Gold = Convert.ToUInt32(node.Attributes["Amount"].Value);
-                }
+                //if (node.Attributes["Amount"] != null)
+                //{
+                //    // TODO: Amount node is currently only used for gold. If there are more items which canhave an amount
+                //    // we must specify how to implement this.
+                //    e.Gold = Convert.ToUInt32(node.Attributes["Amount"].Value);
+                //}
                 zoneManager.AddEntity(e);
             }
         }
 
-        /// <summary>
-        /// Returns the player class with given typeId or null if no class found.
-        /// </summary>
-        /// <param name="typeId"></param>
-        /// <returns></returns>
-        public EntityClassData GetPlayerClass(int typeId)
-        {
-            var result = from c in playerClasses where c.TypeId == typeId select c;
-            if (result.Count() > 0)
-                return result.First();
-            else
-                return null;
-        }
+        ///// <summary>
+        ///// Returns the player class with given typeId or null if no class found.
+        ///// </summary>
+        ///// <param name="typeId"></param>
+        ///// <returns></returns>
+        //public EntityClassData GetPlayerClass(int typeId)
+        //{
+        //    var result = from c in playerClasses where c.TypeId == typeId select c;
+        //    if (result.Count() > 0)
+        //        return result.First();
+        //    else
+        //        return null;
+        //}
 
         /// <summary>
         /// Returns the entity class with given typeId or null if no class found.
         /// </summary>
         /// <param name="typeId"></param>
         /// <returns></returns>
-        public EntityClassData GetEntityClass(int typeId)
+        public EntityData GetEntityData(int typeId)
         {
-            var result = from c in entityClasses where c.TypeId == typeId select c;
+            var result = from c in entities where c.TypeId == typeId select c;
             if (result.Count() > 0)
                 return result.First();
             else

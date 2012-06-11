@@ -36,31 +36,6 @@ namespace AsteriaWorldServer
         #endregion
 
         #region Methods
-        /// <summary>
-        /// Notifies the CSM that a physical connection to a client is lost.
-        /// This is only used from the NetworkServer once a connection state change occures indicating that the client has disconnected.
-        /// </summary>
-        /// <param name="ep"></param>
-        public void NotifyDisconnect(IPEndPoint ep)
-        {
-            MasterPlayerRecord mpr = context.Mpt.GetByEndPoint(ep);
-            if (mpr != null)
-            {
-                if (mpr.State == ClientState.InWorld)
-                {
-                    mpr.LogoutCharacterRequested = true;
-                    mpr.LogoutClientRequested = true;
-                }
-                else
-                {
-                    mpr.LogoutCharacterRequested = true;
-                    mpr.LogoutCharacterGranted = true;
-                    mpr.LogoutClientRequested = true;
-                }
-                mpr.State = ClientState.Disconnecting;
-            }
-        }
-
         protected override void Worker(object parameter)
         {
             Logger.Output(this, "CSM loop starting..");

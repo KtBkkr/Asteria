@@ -9,28 +9,34 @@
 
   <Entity>
     <TypeId>1</TypeId>
-    <ClassName>Mage</ClassName>
-    <Race>Human</Race>
-    <Sex>Female</Sex>
-    <Description>Fist full o boomstick!</Description>
-    <Inventory>8,4</Inventory>
-
+    <Name>Player</Name>
+    <Description>A player character.</Description>
     <Attributes>
-      <Health>250</Health>
-      <Mana>900</Mana>
-      <Strength>10</Strength>
-      <Dexterity>25</Dexterity>
-      <Intelligence>80</Intelligence>
-      <Charisma>40</Charisma>
+      <_gold>0</_gold>
     </Attributes>
+    <Properties>
+      <_groups></_groups>
+    </Properties>
   </Entity>
 
-  <!-- Pickable Items -->
   <Entity>
-    <!-- Gold is a special case since it does not take any space in the inventory and must be handled separately by the world server and client -->
-    <TypeId>1001</TypeId>
-    <ClassName>Gold</ClassName>
-    <Description>Gold</Description>
-    <InventorySlots>0</InventorySlots>
+    <TypeId>2</TypeId>
+    <Name>Structure</Name>
+    <Description>A persistant non moving structure.</Description>
+  </Entity>
+
+  <Entity>
+    <TypeId>3</TypeId>
+    <Name>Ship</Name>
+    <Description>A moving unit type entity.</Description>
+  </Entity>
+
+  <Entity>
+    <TypeId>4</TypeId>
+    <Name>Portal</Name>
+    <Description>A portal to travel between zones.</Description>
+    <Attriubutes>
+      <Destination>0</Destination>
+    </Attriubutes>
   </Entity>
 </XnaContent>

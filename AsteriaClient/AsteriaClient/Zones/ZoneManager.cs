@@ -2,10 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using AsteriaLibrary.Math;
 using AsteriaLibrary.Entities;
 
-namespace AsteriaLibrary.Zones
+namespace AsteriaClient.Zones
 {
     /// <summary>
     /// Provides zones in a 2D top down view on the world.
@@ -17,33 +16,20 @@ namespace AsteriaLibrary.Zones
         private List<Zone> zones = new List<Zone>();
         private SortedList<int, Zone> entity_lookup = new SortedList<int, Zone>();
         private SortedList<int, Zone> zone_lookup = new SortedList<int, Zone>();
-
-        private static ZoneManager singletone;
         #endregion
 
         #region Properties
-        public static ZoneManager Singletone { get { return singletone; } }
+        public List<Zone> Zones { get { return zones; } }
         #endregion
 
         #region Constructors
+
         /// <summary>
         /// Creates a new ZoneManager instance.
-        /// This is used by the server to create the world zones.
+        /// This is used by the server to manage world zones.
         /// </summary>
         public ZoneManager()
         {
-        }
-
-        /// <summary>
-        /// Creates a new ZoneManager instance.
-        /// This is used by the server to create the world zones.
-        /// </summary>
-        public ZoneManager(bool server)
-        {
-            ZoneManager.singletone = this;
-
-            // TODO
-            AddZone(1, "Test Zone", 1000, 1000);
         }
         #endregion
 
@@ -85,6 +71,16 @@ namespace AsteriaLibrary.Zones
             }
         }
 
+        public void RemoveAllZones()
+        {
+            lock (zoneMngrLock)
+            {
+                zones.Clear();
+                entity_lookup.Clear();
+                zone_lookup.Clear();
+            }
+        }
+
         public bool ZoneExists(int id)
         {
             lock (zoneMngrLock)
@@ -120,13 +116,12 @@ namespace AsteriaLibrary.Zones
                 if (GetEntity(entity.Id) != null)
                     return false;
 
-                Zone zone = GetZone(entity.CurrentZone);
+                Zone zone = GetZone(entity.Zone);
                 if (zone == null)
                     return false;
 
                 zone.AddEntity(entity);
-                entity.LastZone = entity.CurrentZone;
-                entity.CurrentZone = zone.Id;
+                entity.Zone = zone.Id;
 
                 if (entity_lookup.ContainsKey(entity.Id))
                     entity_lookup[entity.Id] = zone;
@@ -148,16 +143,14 @@ namespace AsteriaLibrary.Zones
                     {
                         z.RemoveEntity(entity);
                         newZone.AddEntity(entity);
-                        entity.LastZone = entity.CurrentZone;
-                        entity.CurrentZone = newZone.Id;
+                        entity.Zone = newZone.Id;
                         entity_lookup[entity.Id] = newZone;
                     }
                 }
                 else
                 {
                     newZone.AddEntity(entity);
-                    entity.LastZone = entity.CurrentZone;
-                    entity.CurrentZone = newZone.Id;
+                    entity.Zone = newZone.Id;
                     entity_lookup.Add(entity.Id, newZone);
                 }
             }

@@ -10,7 +10,6 @@ using AsteriaLibrary.Messages;
 using AsteriaLibrary.Serialization;
 using AsteriaLibrary.Shared;
 using AsteriaLibrary.Zones;
-using AsteriaWorldServer.Entities;
 using AsteriaWorldServer.Messages;
 using AsteriaWorldServer.PlayerCache;
 using Lidgren.Network;
@@ -28,9 +27,8 @@ namespace AsteriaWorldServer
         private MasterPlayerTable mpt;
         private ServerToClientMessageSerializer serializer;
 
-        private ZoneManager zoneMngr;
+        private ZoneManager zoneManager;
         
-        private int pickupDistance;
         private int turnNumber;
         private static int lastEntityID;
         #endregion
@@ -49,10 +47,7 @@ namespace AsteriaWorldServer
             this.serializer = new ServerToClientMessageSerializer();
 
             // Save our own instance of the ZoneManager, we could have passed that through the constructor as well.
-            zoneMngr = context.ZoneManager;
-
-            string s = DataManager.Singletone.WorldParameters["PickupDistance"];
-            pickupDistance = int.Parse(s);
+            zoneManager = context.ZoneManager;
         }
         #endregion
 
@@ -76,15 +71,19 @@ namespace AsteriaWorldServer
             try
             {
                 // Find the character zone
-                Zone zone = context.ZoneManager.GetZone(character.CurrentZone);
+                Zone zone = context.ZoneManager.GetZone(character.Zone);
                 List<Zone> zones = new List<Zone>();
                 zones.Add(zone);
 
                 Logger.Output(this, "StartCharacter: '{0}' ({1}), zone: {2} ({3})", character.Name, character.CharacterId, zone.Name, zone.Id);
 #if DEBUG
-                if (zone.Id == 0 || zone == null)
+                if (zone == null)
                     throw (new Exception("Sending empty zone message. The player always starts in one zone. This shouldn't be possible at all."));
 #endif
+                if (!zone.IsActive)
+                {
+                }
+
                 ServerToClientMessage wm = ServerToClientMessage.CreateMessageSafe(character.Sender);
                 MessageFormatter.CreateZoneSyncMessage(zones, wm);
                 QueueManager.WorldMessageQueueReadWrite = wm;
@@ -230,12 +229,12 @@ namespace AsteriaWorldServer
             }
 
             // Remove character from the zone.
-            zoneMngr.RemoveEntity(c.Id);
+            zoneManager.RemoveEntity(c.Id);
 
             // Dispatch the message to the zone.
             ServerToClientMessage wm = ServerToClientMessage.CreateMessageSafe(c.Sender);
             MessageFormatter.CreateRemoveEntityFromZoneMessage(c, wm);
-            AddMessageToZone(c.CurrentZone, wm);
+            AddMessageToZone(c.Zone, wm);
             ServerToClientMessage.FreeSafe(wm);
         }
 
@@ -284,9 +283,6 @@ namespace AsteriaWorldServer
                 }
                 else if (msg.MessageType == MessageType.C2S_PlayerLogoutRequest)
                 {
-                    // TODO: [WSE DEV] we must at least set the logout requested flag here.
-                    // If applicable the character can be prepared for logout (setting some flags etc).
-                    // Note that the TurnManager will at some later point invoke IsLogoutAllowed() to trigger the actual logout.
                     mpr.LogoutCharacterRequested = true;
                     mpr.LogoutClientRequested = true;
                 }
@@ -303,130 +299,6 @@ namespace AsteriaWorldServer
         }
 
         /// <summary>
-        /// Processes individual chat messages.
-        /// </summary>
-        public void ProcessChatMessage(Character sendingCharacter, int channel, int destination, string text)
-        {
-            ServerToClientMessage wm = ServerToClientMessage.CreateMessageSafe(sendingCharacter.Sender);
-            MessageFormatter.CreateChatMessage(sendingCharacter.Name, channel, destination, text, wm);
-            AddMessageToZone(sendingCharacter.CurrentZone, wm);
-            ServerToClientMessage.FreeSafe(wm);
-        }
-
-        //private void ProcessPickupMessage(ClientToServerMessage msg, Character c)
-        //{
-        //    int entityId;
-        //    if (int.TryParse(msg.GameData, out entityId))
-        //    {
-        //        Entity e = context.ZoneManager.GetEntity(entityId);
-        //        bool isWrongTarget = false;
-        //        string reason = "";
-
-        //        if (e == null)
-        //        {
-        //            isWrongTarget = true;
-        //            reason = "Item not found.";
-        //        }
-        //        else
-        //        {
-        //            // Check if thats a pickable item at all.
-        //            if ((e.TypeId > 1000) && (e.TypeId < 3001)) // TODO: those values must be kept in sync with the Entities.xml, maybe using worldParams is better??
-        //            {
-        //                Point distance = c.Position - e.Position;
-        //                if (distance.Length() <= pickupDistance)
-        //                {
-        //                    try
-        //                    {
-        //                        // Check if possible and add.
-        //                        EntityClassData ecd;
-        //                        InventoryBag bag;
-        //                        int itemAmount = 1;
-        //                        if (InventoryManager.AddItem(c, e.Id, itemAmount, out ecd, out bag))
-        //                        {
-        //                            // Start saving character to DB.
-        //                            InvokeBackgroundCharacterSave(c);
-
-        //                            // Bag contains now the real characters item bag already updated with
-        //                            // the amount but we need to send only the changed amount so we need a copy.
-        //                            InventoryBag newBag = InventoryBag.FromInventoryBag(bag);
-        //                            newBag.Amount = itemAmount;
-
-        //                            // Check if special case for gold.
-        //                            if (ecd.SlotSize == Size.Zero)
-        //                            {
-        //                                if (e.Name == "Gold")
-        //                                {
-        //                                    // TODO: [HIGH] implement sending gold change to client.
-        //                                    c.Gold += e.Gold;
-        //                                }
-        //                                else
-        //                                {
-        //                                    isWrongTarget = true;
-        //                                    reason = "I can't pickup this item!"; // TODO: [LOW] implement message generator, the text is displayed in the client.
-        //                                }
-        //                            }
-        //                            else
-        //                            {
-        //                                // Send cient the inventory layout.
-        //                                ServerToClientMessage wm = ServerToClientMessage.CreateMessageSafe();
-        //                                // TODO: [LOW] the framework supports changing multiple items at once but we always send only one. Rethink if the whole inventory logic fits as it is now.
-        //                                MessageFormatter.CreateInventoryChangeMessage(c, InventoryChangeType.Pickup, new InventoryBag[] { newBag }, wm);
-        //                                c.MessageBuffer.Add(wm);
-        //                            }
-        //                        }
-        //                        else
-        //                        {
-        //                            ServerToClientMessage wm = ServerToClientMessage.CreateMessageSafe();
-        //                            MessageFormatter.CreateInvalidActionMessage(PlayerAction.Pickup, "Inventory full!", wm);
-        //                            c.MessageBuffer.Add(wm);
-        //                        }
-        //                    }
-        //                    catch (Exception ex)
-        //                    {
-        //                        Logger.Output(this, "ProcessMessage() msg: 'Pickup', item: {0}, character: {1}, exception: {2}, stacktrace {3}", entityId, c.CharacterId, ex.Message, ex.StackTrace);
-        //                        ServerToClientMessage wm = ServerToClientMessage.CreateMessageSafe();
-        //                        MessageFormatter.CreateInvalidActionMessage(PlayerAction.Pickup, "Unexpected error.", wm);
-        //                        c.MessageBuffer.Add(wm);
-        //                        isWrongTarget = true;
-        //                        reason = "Inventory error!";
-        //                    }
-        //                }
-        //                else
-        //                {
-        //                    isWrongTarget = true;
-        //                    reason = "Item is unreachable!";
-        //                }
-        //            }
-        //            else
-        //            {
-        //                isWrongTarget = true;
-        //                reason = "This can't be picked up!";
-        //            }
-        //        }
-
-        //        // Final notification
-        //        if (isWrongTarget)
-        //        {
-        //            // Notify client that this is not possible.
-        //            ServerToClientMessage wm = ServerToClientMessage.CreateMessageSafe(c.Sender);
-        //            MessageFormatter.CreateInvalidTargetMessage(entityId, reason, wm);
-        //            c.MessageBuffer.Add(wm);
-        //        }
-        //        else
-        //        {
-        //            // Notify zone that item is gone.
-        //            using (ServerToClientMessage wm = ServerToClientMessage.CreateMessageSafe())
-        //            {
-        //                MessageFormatter.CreateRemoveEntityFromZoneMessage(e, wm);
-        //                AddMessageToLinkedZones(wm, e.CurrentZone);
-        //                ServerToClientMessage.FreeSafe(wm);
-        //            }
-        //            zoneMngr.RemoveEntity(entityId);
-        //        }
-        //    }
-        //}
-
-        /// <summary>
         /// TODO: check multiple conditions to verify if logout is allowed like current game state, is the character attacked, etc.
         /// </summary>
         /// <param name="characterId"></param>
@@ -437,12 +309,12 @@ namespace AsteriaWorldServer
         }
 
         /// <summary>
-        /// Invoked every server turn start. Add ame specific implementation which is time dependant here (movements, bullets, spell duration, buffs, recovery, etc).
+        /// Invoked every server turn start. Add game specific implementation which is time dependant here (movements, bullets, spell duration, buffs, recovery, etc).
         /// </summary>
         /// <param name="elapsedMilliseconds">Number of milliseconds passed since last turn.</param>
         private void OnNewTurn(float elapsedMilliseconds)
         {
-            // TODO
+            zoneManager.Update();
         }
         #endregion
 
@@ -451,7 +323,7 @@ namespace AsteriaWorldServer
         /// Buffers the message to all character entities of a single zone.
         /// Note that the message parameter wm is not used directly, instead a copy is created.
         /// </summary>
-        private void AddMessageToZone(Zone zone, ServerToClientMessage wm)
+        public void AddMessageToZone(Zone zone, ServerToClientMessage wm)
         {
             wm.TurnNumber = turnNumber;
             foreach (Character c in zone.Characters)
@@ -466,11 +338,32 @@ namespace AsteriaWorldServer
         /// Buffers the message to all character entities of a single zone.
         /// Note that the message parameter wm is not used directly, instead a copy is created.
         /// </summary>
-        private void AddMessageToZone(int zoneId, ServerToClientMessage wm)
+        public void AddMessageToZone(int zoneId, ServerToClientMessage wm)
         {
-            Zone zone = zoneMngr.GetZone(zoneId);
+            Zone zone = zoneManager.GetZone(zoneId);
             if (zone != null)
                 AddMessageToZone(zone, wm);
+        }
+
+        /// <summary>
+        /// Buffers the message to all character entities in every zone.
+        /// Note that the message parameter wm is not used directly, instead a copy is created.
+        /// </summary>
+        public void AddMessageToAllZones(ServerToClientMessage wm)
+        {
+            wm.TurnNumber = turnNumber;
+            foreach (Zone zone in zoneManager.Zones)
+            {
+                if (!zone.IsActive)
+                    continue;
+
+                foreach (Character c in zone.Characters)
+                {
+                    // The copy is mandatory or we will end up overwritng messages
+                    // which ar still in use after the serializer invokes FreeSafe!
+                    c.MessageBuffer.Add(ServerToClientMessage.Copy(wm, c.Sender));
+                }
+            }
         }
 
         /// <summary>

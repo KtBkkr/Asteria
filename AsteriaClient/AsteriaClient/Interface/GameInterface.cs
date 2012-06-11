@@ -7,6 +7,7 @@ using Microsoft.Xna.Framework;
 using Controls = AsteriaClient.Interface.Controls;
 using AsteriaLibrary.Shared;
 using AsteriaLibrary.Messages;
+using AsteriaLibrary.Entities;
 
 namespace AsteriaClient.Interface
 {
@@ -21,7 +22,7 @@ namespace AsteriaClient.Interface
 
         private BottomBar botbar;
         private BottomBarPanel chatPanel;
-        private BottomBarPanel botpanel2;
+        private BottomBarPanel infoPanel;
         private Controls.Console console;
         private Panel panel;
 
@@ -32,7 +33,12 @@ namespace AsteriaClient.Interface
         private Button deleteButton;
         private Button startButton;
 
-        private Label Name;
+        private Label name;
+        private Label zone;
+        private Label entities;
+
+        private Button logoutButton;
+        private Button quitButton;
         #endregion
 
         #region Properties
@@ -103,25 +109,25 @@ namespace AsteriaClient.Interface
             console.SelectedChannel = 1;
             chatPanel.Add(console);
 
-            botpanel2 = new BottomBarPanel(manager);
-            botpanel2.Init();
-            botpanel2.Width = manager.ScreenWidth - chatPanel.Width - 30;
-            botpanel2.Left = chatPanel.Width + 20;
-            botpanel2.Top = 10;
-            botpanel2.Height = botbar.Height - 20;
-            botbar.Add(botpanel2);
+            infoPanel = new BottomBarPanel(manager);
+            infoPanel.Init();
+            infoPanel.Width = manager.ScreenWidth - chatPanel.Width - 30;
+            infoPanel.Left = chatPanel.Width + 20;
+            infoPanel.Top = 10;
+            infoPanel.Height = botbar.Height - 20;
+            botbar.Add(infoPanel);
 
             panel = new Panel(manager);
             panel.Init();
             panel.Left = 4;
-            panel.Width = botpanel2.Width - 8;
-            panel.Height = botpanel2.Height - 4;
+            panel.Width = infoPanel.Width - 8;
+            panel.Height = infoPanel.Height - 4;
             panel.Anchor = Anchors.All;
             panel.Color = new Color(80, 80, 80);
             panel.BevelColor = Color.Black;
             panel.BevelBorder = BevelBorder.All;
             panel.BevelStyle = BevelStyle.Flat;
-            botpanel2.Add(panel);
+            infoPanel.Add(panel);
 
             InitCharWindow();
             InitCharInfo();
@@ -183,7 +189,55 @@ namespace AsteriaClient.Interface
 
         private void InitCharInfo()
         {
+            logoutButton = new Button(manager);
+            logoutButton.Init();
+            logoutButton.Left = 4;
+            logoutButton.Top = panel.Height - logoutButton.Height - 4;
+            logoutButton.Text = "Logout";
+            logoutButton.Click += new Controls.EventHandler(logoutButton_Click);
+            panel.Add(logoutButton);
 
+            quitButton = new Button(manager);
+            quitButton.Init();
+            quitButton.Left = logoutButton.Left + logoutButton.Width + 4;
+            quitButton.Top = logoutButton.Top;
+            quitButton.Text = "Quit";
+            quitButton.Click += new Controls.EventHandler(quitButton_Click);
+            panel.Add(quitButton);
+
+            name = new Label(manager);
+            name.Init();
+            name.Top = 4;
+            name.Left = 4;
+            name.Width = 300;
+            name.Text = "Name: ";
+            panel.Add(name);
+
+            zone = new Label(manager);
+            zone.Init();
+            zone.Top = name.Top + name.Height + 4;
+            zone.Left = 4;
+            zone.Width = 300;
+            zone.Text = "Zone: ";
+            panel.Add(zone);
+
+            entities = new Label(manager);
+            entities.Init();
+            entities.Top = zone.Top + zone.Height + 4;
+            entities.Left = 4;
+            entities.Width = 300;
+            entities.Text = "Entities: ";
+            panel.Add(entities);
+        }
+
+        void logoutButton_Click(object sender, Controls.EventArgs e)
+        {
+            context.Network.Logout();
+        }
+
+        void quitButton_Click(object sender, Controls.EventArgs e)
+        {
+            context.Network.Quit();
         }
 
         /// <summary>
@@ -262,6 +316,12 @@ namespace AsteriaClient.Interface
                 pm.GameData = message;
                 context.Network.SendMessage(pm);
             }
+        }
+
+        public void UpdateCharacterInfo(Character c)
+        {
+            name.Text = "Name: " + c.Name;
+            zone.Text = "Zone: " + c.Zone;
         }
 
         void createButton_Click(object sender, Controls.EventArgs e)
