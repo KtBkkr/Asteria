@@ -6,8 +6,8 @@ using AsteriaLibrary.Entities;
 using AsteriaLibrary.Math;
 using AsteriaLibrary.Messages;
 using AsteriaLibrary.Shared;
-using AsteriaLibrary.Zones;
 using AsteriaWorldServer.PlayerCache;
+using AsteriaWorldServer.Zones;
 using Lidgren.Network;
 
 namespace AsteriaWorldServer.Messages
@@ -19,29 +19,61 @@ namespace AsteriaWorldServer.Messages
     /// </summary>
     static class MessageFormatter
     {
-        #region Methods
+        #region Entities
+        /// <summary>
+        /// Generates an entity format string based on the type.
+        /// </summary>
+        public static string GenerateEntityFormat(Entity entity)
+        {
+            if (entity == null)
+                return null;
+
+            string format = null;
+            if (entity is Character)
+                format = ((Character)entity).ToFormatString();
+            else if (entity is EnergyStation)
+                format = ((EnergyStation)entity).ToFormatString();
+            else if (entity is EnergyRelay)
+                format = ((EnergyRelay)entity).ToFormatString();
+            else if (entity is MineralMiner)
+                format = ((MineralMiner)entity).ToFormatString();
+            else if (entity is BasicLaser)
+                format = ((BasicLaser)entity).ToFormatString();
+            else if (entity is PulseLaser)
+                format = ((PulseLaser)entity).ToFormatString();
+            else if (entity is TacticalLaser)
+                format = ((TacticalLaser)entity).ToFormatString();
+            else if (entity is MissileLauncher)
+                format = ((MissileLauncher)entity).ToFormatString();
+            else if (entity is Asteroid)
+                format = ((Asteroid)entity).ToFormatString();
+            else if (entity is Unit)
+                format = ((Unit)entity).ToFormatString();
+            else
+                format = entity.ToFormatString();
+
+            return format;
+        }
+
         /// <summary>
         /// Formats the ServerToClientMessage with entity data.
         /// Data holds colon separated entity data.
-        /// Buffer holds 5 bytes for Id(4), isChar(1).
+        /// Buffer holds 8 bytes for Id(4), TypeId(4)
         /// </summary>
         /// <param name="e">The entity instance to read data from.</param>
         /// <param name="wm">The ServerToClientMessage instance that will hold the data.</param>
         public static void CreateAddEntityToZoneMessage(Entity e, ServerToClientMessage wm)
         {
             wm.MessageType = MessageType.S2C_ZoneMessage;
-            wm.Buffer = new byte[5];
+            wm.Buffer = new byte[8];
             wm.Code = (int)PlayerAction.AddEntity;
             wm.DeliveryMethod = NetDeliveryMethod.ReliableOrdered;
             wm.DeliveryChannel = 1;
 
             BitConverter.GetBytes(e.Id).CopyTo(wm.Buffer, 0); // 4b: 0-3 entity Id
-            wm.Buffer[4] = (byte)(e is Character ? 1 : 0); // 1b: 4 1 = character, 0 = entity
+            BitConverter.GetBytes(e.TypeId).CopyTo(wm.Buffer, 4); // 1=character, 2=structure, so on,
 
-            if (e is Character)
-                wm.Data = ((Character)e).ToFormatString();
-            else
-                wm.Data = e.ToFormatString();
+            wm.Data = GenerateEntityFormat(e);
         }
 
         /// <summary>
@@ -59,6 +91,23 @@ namespace AsteriaWorldServer.Messages
             wm.Data = null;
         }
 
+        public static void CreateDamageEntityMessage(Entity to, Entity from, int amount, ServerToClientMessage wm)
+        {
+            wm.MessageType = MessageType.S2C_ZoneMessage;
+            wm.Buffer = BitConverter.GetBytes(to.Id);
+            wm.Code = (int)PlayerAction.Damage;
+            wm.DeliveryMethod = NetDeliveryMethod.ReliableUnordered;
+            wm.DeliveryChannel = 0;
+
+            string data = amount.ToString();
+            if (from != null)
+                data = String.Format("{0}:{1}", amount, from.Id);
+
+            wm.Data = data;
+        }
+        #endregion
+
+        #region Zones
         /// <summary>
         /// Formats the ServerToClientMessage with zone data.
         /// Data holds colon separated entity data.
@@ -104,7 +153,9 @@ namespace AsteriaWorldServer.Messages
                     else
                     {
                         sb.Append(ENTITY_DELIMITER);
-                        sb.Append(entity.ToFormatString());
+                        sb.Append(entity.TypeId);
+                        sb.Append("|");
+                        sb.Append(GenerateEntityFormat(entity));
                     }
                 }
             }
@@ -135,27 +186,46 @@ namespace AsteriaWorldServer.Messages
             }
             wm.Data = sb.ToString();
         }
+        #endregion
 
-        /// <summary>
-        /// Formats a ServerToClientMessage with InvalidAction message data.
-        /// Data contains a textual description which is a WSE implementation detail.
-        /// Buffer contains 4 bytes for the player action.
-        /// </summary>
-        /// <param name="action"></param>
-        /// <param name="message"></param>
-        /// <param name="wm"></param>
-        public static void CreateInvalidActionMessage(PlayerAction action, string message, ServerToClientMessage wm)
+        #region Character
+        public static void CreateTeleportMessage(Zone newZone, ServerToClientMessage wm)
         {
             if (wm.Sender == null)
                 throw (new Exception("wm.Sender can't be NULL on outgoing messages."));
 
             wm.MessageType = MessageType.S2C_ZoneMessage;
-            wm.Code = (int)PlayerAction.InvalidAction;
-            wm.Buffer = new byte[4];
+            wm.Buffer = null;
+            wm.Code = (int)PlayerAction.Teleport;
             wm.DeliveryMethod = NetDeliveryMethod.ReliableOrdered;
             wm.DeliveryChannel = 0;
-            wm.Data = message;
-            BitConverter.GetBytes((int)action).CopyTo(wm.Buffer, 0); // 4b: 0-3 player action.
+
+            StringBuilder sb = new StringBuilder();
+            sb.Append("#Z");
+            sb.Append(newZone.Id);
+            sb.Append(":");
+            sb.Append(newZone.Name);
+            sb.Append(":");
+            sb.Append(newZone.Width);
+            sb.Append(":");
+            sb.Append(newZone.Height);
+
+            foreach (Entity entity in newZone.AllEntities)
+            {
+                if (entity is Character)
+                {
+                    sb.Append("#C");
+                    sb.Append(((Character)entity).ToFormatString());
+                }
+                else
+                {
+                    sb.Append("#E");
+                    sb.Append(entity.TypeId);
+                    sb.Append("|");
+                    sb.Append(GenerateEntityFormat(entity));
+                }
+            }
+            wm.Data = sb.ToString();
         }
 
         /// <summary>
@@ -181,17 +251,41 @@ namespace AsteriaWorldServer.Messages
             wm.DeliveryChannel = 0;
             wm.DeliveryMethod = NetDeliveryMethod.ReliableUnordered;
         }
+        #endregion
 
-        public static void CreateChatMessage(string name, int channel, int destination, string message, ServerToClientMessage wm)
+        #region Misc.
+        /// <summary>
+        /// Formats a ServerToClientMessage with InvalidAction message data.
+        /// Data contains a textual description which is a GP implementation detail.
+        /// Buffer contains 4 bytes for the player action.
+        /// </summary>
+        /// <param name="action"></param>
+        /// <param name="message"></param>
+        /// <param name="wm"></param>
+        public static void CreateInvalidActionMessage(PlayerAction action, string message, ServerToClientMessage wm)
+        {
+            if (wm.Sender == null)
+                throw (new Exception("wm.Sender can't be NULL on outgoing messages."));
+
+            wm.MessageType = MessageType.S2C_ZoneMessage;
+            wm.Code = (int)PlayerAction.InvalidAction;
+            wm.Buffer = new byte[4];
+            wm.DeliveryMethod = NetDeliveryMethod.ReliableOrdered;
+            wm.DeliveryChannel = 0;
+            wm.Data = message;
+            BitConverter.GetBytes((int)action).CopyTo(wm.Buffer, 0); // 4b: 0-3 player action.
+        }
+
+        public static void CreateChatMessage(ChatType type, string message, ServerToClientMessage wm)
         {
             if (wm.Sender == null)
                 throw (new Exception("wm.Sender can't be NULL on outgoing messages."));
 
             wm.MessageType = MessageType.S2C_ChatMessage;
-            wm.Code = (channel != 0) ? channel : destination;
+            wm.Code = (int)type;
             wm.DeliveryMethod = NetDeliveryMethod.ReliableOrdered;
             wm.DeliveryChannel = 0;
-            wm.Data = String.Format("({0}) {1}", name, message);
+            wm.Data = message;
         }
         #endregion
     }

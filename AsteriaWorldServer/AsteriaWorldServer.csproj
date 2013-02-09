@@ -52,6 +52,7 @@
   <ItemGroup>
     <Compile Include="ChatProcessor.cs" />
     <Compile Include="ClientStateManager.cs" />
+    <Compile Include="CommandHandler.cs" />
     <Compile Include="Config.cs" />
     <Compile Include="DalProvider.cs" />
     <Compile Include="EntityData.cs" />

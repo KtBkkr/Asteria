@@ -37,6 +37,8 @@ namespace AsteriaLibrary.Client
         protected ServerToClientMessageSerializer deserializer;
 
         private string protocolVersion;
+
+        private const int connection_timeout = 1000;
         #endregion
 
         #region Properties
@@ -141,7 +143,7 @@ namespace AsteriaLibrary.Client
 
             client.Connect(endPoint, msg);
 
-            DateTime timeout = DateTime.Now.AddMilliseconds(5000);
+            DateTime timeout = DateTime.Now.AddMilliseconds(connection_timeout);
 
             while (!isConnected && DateTime.Now < timeout)
                 Thread.Sleep(500);
@@ -382,6 +384,7 @@ namespace AsteriaLibrary.Client
                                 }
                                 OnMessageReceived(onemsg.MessageType);
                             }
+                            ServerToClientMessage.FreeSafe(msg);
                         }
                         else
                         {

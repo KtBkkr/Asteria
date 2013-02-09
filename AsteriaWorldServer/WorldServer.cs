@@ -5,10 +5,10 @@ using System.Diagnostics;
 using System.Net;
 using System.Threading;
 using AsteriaLibrary.Shared;
-using AsteriaLibrary.Zones;
 using AsteriaWorldServer.Messages;
 using AsteriaWorldServer.Networking;
 using AsteriaWorldServer.PlayerCache;
+using AsteriaWorldServer.Zones;
 using Lidgren.Network;
 using MySql.Data.MySqlClient;
 
@@ -120,12 +120,16 @@ namespace AsteriaWorldServer
                 context.ZoneManager = new ZoneManager(context);
 
                 // Now load all static predefined entities.
-                Logger.Output(this, "Loading static entities..");
-                dMngr.LoadStaticEntities(context.ZoneManager);
+                //Logger.Output(this, "Loading static entities..");
+                //dMngr.LoadStaticEntities(context.ZoneManager);
 
                 // Create the game processor for handling messages.
                 Logger.Output(this, "Creating game processor..");
                 context.GameProcessor = new GameProcessor(context);
+
+                // Create the chat processor for handling chat and remote commands.
+                Logger.Output(this, "Creating chat processor..");
+                context.ChatProcessor = new ChatProcessor(context);
 
                 // Network server
                 Logger.Output(this, "Creating network server..");
@@ -234,7 +238,7 @@ namespace AsteriaWorldServer
 
                 // Character Management, Inter Server, Chat
                 Logger.Output(this, "Creating low priority handler..");
-                lowPrioHandler = new LowPriorityManager(context, dal);
+                lowPrioHandler = new LowPriorityManager(context);
 
                 int.TryParse(context.ServerConfig["threadpool_size_T3"], out result);
                 lowPrioHandler.Start(result);
@@ -265,7 +269,37 @@ namespace AsteriaWorldServer
             if (networkServer != null)
                 networkServer.Stop();
 
-            context.ZoneManager.SaveAllZones();
+            context.ZoneManager.SaveAllZones(new object());
+
+            // Insert the latest entity ID for next load.
+            context.ServerConfig["entity_id"] = GameProcessor.GenerateEntityID().ToString();
+
+            using (MySqlConnection conn = new MySqlConnection(context.Css))
+            {
+                conn.Open();
+
+                if (conn.State == ConnectionState.Open)
+                {
+                    Logger.Output(this, "Saving settings to database..");
+
+                    MySqlCommand cmd = conn.CreateCommand();
+                    cmd.CommandText = "UPDATE settings SET value = @value WHERE name = @name";
+                    cmd.Parameters.Add("@name", MySqlDbType.String, 50);
+                    cmd.Parameters.Add("@value", MySqlDbType.String, 255);
+
+                    foreach (KeyValuePair<string, string> kvp in context.ServerConfig)
+                    {
+                        cmd.Parameters["@name"].Value = kvp.Key;
+                        cmd.Parameters["@value"].Value = kvp.Value;
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+                else
+                {
+                    Logger.Output(this, "Could not save settings to database, connection failed!");
+                    throw new InvalidOperationException("Save settings failed. Bad connection.");
+                }
+            }
         }
 
         /// <summary>
@@ -307,18 +341,38 @@ namespace AsteriaWorldServer
         /// <param name="message"></param>
         public void HandleConsoleCommand(string message)
         {
-            if (message == "exit")
+            string[] args = message.Split(' ');
+
+            if (args[0] == "exit")
             {
                 isClosing = true;
                 return;
             }
-            else if (message == "stats")
+            else if (args[0] == "stats")
             {
                 WriteStatistics();
                 return;
             }
+            else if (args[0] == "savezones")
+            {
+                Console.WriteLine("Starting background zone save..");
+                ThreadPool.QueueUserWorkItem(new WaitCallback(context.ZoneManager.SaveAllZones));
+            }
+            else if (args[0] == "loadzone")
+            {
+                context.ZoneManager.LoadZone(int.Parse(args[1]));
+            }
+            else if (args[0] == "help")
+            {
+                Console.WriteLine();
+                Console.WriteLine("Commands:");
+                Console.WriteLine("exit - shuts down the server.");
+                Console.WriteLine("stats - displays network statistics.");
+                Console.WriteLine("savezones - saves the world to the database.");
+                return;
+            }
             else
-                Console.WriteLine("\r\nUnknown command.\r\n");
+                Console.WriteLine("\r\nUnknown command. Type 'help'.\r\n");
         }
         #endregion
     }

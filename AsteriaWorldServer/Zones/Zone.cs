@@ -6,7 +6,7 @@ using AsteriaLibrary.Messages;
 using AsteriaLibrary.Math;
 using AsteriaLibrary.Entities;
 
-namespace AsteriaLibrary.Zones
+namespace AsteriaWorldServer.Zones
 {
     /// <summary>
     /// Main container for entities.
@@ -117,11 +117,17 @@ namespace AsteriaLibrary.Zones
         }
         #endregion
 
+        #region Constructors
+        public Zone()
+        {
+        }
+        #endregion
+
         #region Methods
         /// <summary>
         /// Initializes a new zone instance.
         /// </summary>
-        public void Initialize(int id, string name, int width, int height)
+        public virtual void Initialize(int id, string name, int width, int height)
         {
             lock (zoneLock)
             {
@@ -133,7 +139,7 @@ namespace AsteriaLibrary.Zones
             }
         }
 
-        public void Update()
+        public virtual void Update()
         {
             if (IsActive)
                 lastActive = DateTime.Now;
@@ -151,7 +157,7 @@ namespace AsteriaLibrary.Zones
         /// <summary>
         /// Updates the zone data.
         /// </summary>
-        public void ChangeZone(string name, int width, int height)
+        public virtual void ChangeZone(string name, int width, int height)
         {
             lock (zoneLock)
             {
@@ -169,7 +175,7 @@ namespace AsteriaLibrary.Zones
         /// Adds an entity to the zone.
         /// </summary>
         /// <param name="entity"></param>
-        internal void AddEntity(Entity entity)
+        public virtual void AddEntity(Entity entity)
         {
             lock (zoneLock)
             {
@@ -183,7 +189,7 @@ namespace AsteriaLibrary.Zones
         /// <summary>
         /// Removes an entity from the zone.
         /// </summary>
-        internal bool RemoveEntity(Entity entity)
+        public virtual bool RemoveEntity(Entity entity)
         {
             lock (zoneLock)
             {
@@ -201,7 +207,7 @@ namespace AsteriaLibrary.Zones
         /// <summary>
         /// Removes an entity from the zone.
         /// </summary>
-        internal bool RemoveEntity(int id)
+        public virtual bool RemoveEntity(int id)
         {
             lock (zoneLock)
             {
@@ -216,7 +222,7 @@ namespace AsteriaLibrary.Zones
         /// <summary>
         /// Clears the zone of all entities.
         /// </summary>
-        internal void Clear()
+        public virtual void Clear()
         {
             lock (zoneLock)
             {
@@ -228,11 +234,11 @@ namespace AsteriaLibrary.Zones
         /// <summary>
         /// Gets an entity from the zone.
         /// </summary>
-        public Entity GetEntity(int id)
+        public virtual Entity GetEntity(int id)
         {
             lock (zoneLock)
             {
-                foreach(Character character in characters)
+                foreach (Character character in characters)
                 {
                     if (character.Id == id)
                         return (Entity)character;

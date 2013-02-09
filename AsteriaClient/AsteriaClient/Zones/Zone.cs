@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using AsteriaLibrary.Messages;
-using AsteriaLibrary.Entities;
 using AsteriaLibrary.Math;
+using AsteriaLibrary.Entities;
 
 namespace AsteriaClient.Zones
 {
@@ -19,9 +19,8 @@ namespace AsteriaClient.Zones
         private string name;
         private int width;
         private int height;
-        private List<ServerToClientMessage> messages = new List<ServerToClientMessage>();
 
-        private List<Entity> objects = new List<Entity>();
+        private List<Entity> entities = new List<Entity>();
         private List<Character> characters = new List<Character>();
         #endregion
 
@@ -33,14 +32,6 @@ namespace AsteriaClient.Zones
         {
             get { return id; }
             set { id = value; }
-        }
-
-        /// <summary>
-        /// Returns true if the zone is active (contains at least one character entity).
-        /// </summary>
-        public bool IsActive
-        {
-            get { return characters.Count > 0; }
         }
 
         /// <summary>
@@ -63,35 +54,23 @@ namespace AsteriaClient.Zones
         public int Height { get { return height; } }
 
         /// <summary>
-        /// Returns all messages from the current zone.
+        /// Returns a list of all entities (characters + entities) inside the zone.
         /// </summary>
-        private List<ServerToClientMessage> Messages
-        {
-            get
-            {
-                lock (zoneLock)
-                    return messages;
-            }
-        }
-
-        /// <summary>
-        /// Returns a list of all entities (characters + objects) inside the zone.
-        /// </summary>
-        public List<Entity> Entities
+        public List<Entity> AllEntities
         {
             get
             {
                 lock (zoneLock)
                 {
-                    List<Entity> entities = new List<Entity>();
+                    List<Entity> list = new List<Entity>();
 
                     foreach (Character character in characters)
-                        entities.Add((Entity)character);
+                        list.Add((Entity)character);
 
-                    foreach (Entity entity in objects)
-                        entities.Add(entity);
+                    foreach (Entity entity in entities)
+                        list.Add(entity);
 
-                    return entities;
+                    return list;
                 }
             }
         }
@@ -109,15 +88,21 @@ namespace AsteriaClient.Zones
         }
 
         /// <summary>
-        /// Returns a list of all objects inside the zone.
+        /// Returns a list of all entities inside the zone.
         /// </summary>
-        public List<Entity> Objects
+        public List<Entity> Entities
         {
             get
             {
                 lock (zoneLock)
-                    return new List<Entity>(objects);
+                    return new List<Entity>(entities);
             }
+        }
+        #endregion
+
+        #region Constructors
+        public Zone()
+        {
         }
         #endregion
 
@@ -125,10 +110,7 @@ namespace AsteriaClient.Zones
         /// <summary>
         /// Initializes a new zone instance.
         /// </summary>
-        /// <param name="id">Unique zone ID.</param>
-        /// <param name="name">Zone name for debugging.</param>
-        /// <param name="size">Zone size.</param>
-        public void Initialize(int id, string name, int width, int height)
+        public virtual void Initialize(int id, string name, int width, int height)
         {
             lock (zoneLock)
             {
@@ -139,29 +121,26 @@ namespace AsteriaClient.Zones
             }
         }
 
+        /// <summary>
+        /// Perform any updates to entities or zone.
+        /// </summary>
+        public virtual void Update()
+        {
+        }
+
+        /// <summary>
+        /// Checks if the supplied position is within the zone width and height.
+        /// </summary>
         public bool IsInsideZone(ref Point position)
         {
             return position.X >= 0 && position.X <= width
                 && position.Y >= 0 && position.Y >= height;
         }
 
-        #region Zone Implementation
-        /// <summary>
-        /// Adds a S2C message to the zone queue.
-        /// </summary>
-        /// <param name="msg"></param>
-        public void AddMessage(ServerToClientMessage msg)
-        {
-            lock (zoneLock)
-                messages.Add(msg);
-        }
-
         /// <summary>
         /// Updates the zone data.
         /// </summary>
-        /// <param name="name"></param>
-        /// <param name="size"></param>
-        public void UpdateZone(string name, int width, int height)
+        public virtual void ChangeZone(string name, int width, int height)
         {
             lock (zoneLock)
             {
@@ -174,27 +153,26 @@ namespace AsteriaClient.Zones
             }
         }
 
+        #region Entity Management
         /// <summary>
         /// Adds an entity to the zone.
         /// </summary>
         /// <param name="entity"></param>
-        internal void AddEntity(Entity entity)
+        public virtual void AddEntity(Entity entity)
         {
             lock (zoneLock)
             {
                 if (entity.GetType() == typeof(Character))
                     characters.Add((Character)entity);
                 else
-                    objects.Add(entity);
+                    entities.Add(entity);
             }
         }
 
         /// <summary>
         /// Removes an entity from the zone.
         /// </summary>
-        /// <param name="entity"></param>
-        /// <returns></returns>
-        internal bool RemoveEntity(Entity entity)
+        public virtual bool RemoveEntity(Entity entity)
         {
             lock (zoneLock)
             {
@@ -203,7 +181,7 @@ namespace AsteriaClient.Zones
                 if (entity.GetType() == typeof(Character))
                     found = characters.Remove((Character)entity);
                 else
-                    found = objects.Remove(entity);
+                    found = entities.Remove(entity);
 
                 return found;
             }
@@ -212,9 +190,7 @@ namespace AsteriaClient.Zones
         /// <summary>
         /// Removes an entity from the zone.
         /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        internal bool RemoveEntity(int id)
+        public virtual bool RemoveEntity(int id)
         {
             lock (zoneLock)
             {
@@ -229,31 +205,29 @@ namespace AsteriaClient.Zones
         /// <summary>
         /// Clears the zone of all entities.
         /// </summary>
-        internal void Clear()
+        public virtual void Clear()
         {
             lock (zoneLock)
             {
                 characters.Clear();
-                objects.Clear();
+                entities.Clear();
             }
         }
 
         /// <summary>
         /// Gets an entity from the zone.
         /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        public Entity GetEntity(int id)
+        public virtual Entity GetEntity(int id)
         {
             lock (zoneLock)
             {
-                foreach(Character character in characters)
+                foreach (Character character in characters)
                 {
                     if (character.Id == id)
                         return (Entity)character;
                 }
 
-                foreach (Entity entity in objects)
+                foreach (Entity entity in entities)
                 {
                     if (entity.Id == id)
                         return entity;

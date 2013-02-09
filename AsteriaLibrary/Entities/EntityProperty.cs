@@ -53,7 +53,7 @@ namespace AsteriaLibrary.Entities
         /// <param name="value"></param>
         public EntityProperty(string name, string description, string value)
         {
-            this.Name = name.ToLowerInvariant();
+            this.Name = name;
             this.Description = description;
             this.Value = value;
         }
@@ -65,7 +65,7 @@ namespace AsteriaLibrary.Entities
         /// <param name="description"></param>
         public EntityProperty(string name, string description)
         {
-            this.Name = name.ToLowerInvariant();
+            this.Name = name;
             this.Description = description;
         }
         #endregion

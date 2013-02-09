@@ -15,6 +15,7 @@ using AsteriaClient.Interface;
 using AsteriaClient.Interface.Controls;
 using AsteriaClient.Network;
 using System.Threading;
+using AsteriaClient.Zones;
 
 namespace AsteriaClient
 {
@@ -32,8 +33,15 @@ namespace AsteriaClient
         private Texture2D background;
 
         private Context context;
+        private Config config;
+
+        private TextureManager textureManager;
+        private InputManager inputManager;
+
+        private ZoneManager zoneManager;
         private GameInterface gameInterface;
         private GameNetwork gameNetwork;
+        private WorldManager worldManager;
 
         private SpriteFont font;
         #endregion
@@ -62,6 +70,7 @@ namespace AsteriaClient
             graphics.PreferredBackBufferHeight = 900;
             graphics.IsFullScreen = false;
             graphics.ApplyChanges();
+
             logger = new Logger("Asteria.log");
             Logger.MessageReceived += new LoggerMsgEvent(ToLog);
 
@@ -69,12 +78,33 @@ namespace AsteriaClient
             context.Protocol = "0.1";
             context.Game = this;
 
+            config = new Config();
+            config.LoadDefaultConfig();
+
+            // Create texture manager to draw textures from.
+            textureManager = new TextureManager();
+
+            // Create input manager to handle mouse/keyboard states.
+            inputManager = new InputManager(context);
+            context.Input = inputManager;
+
+            // Create the zonemanager.
+            zoneManager = new ZoneManager(context);
+            context.ZoneManager = zoneManager;
+
+            // Create the game interface.
             gameInterface = new GameInterface(context);
             context.Gui = gameInterface;
+            gameInterface.InitInterface();
 
+            // Create the game network.
             gameNetwork = new GameNetwork(context);
-            gameNetwork.ConnectToWorld("173.51.135.30", 5961, 1, "admin_testing");
+            gameNetwork.ConnectToWorld("127.0.0.1", 5961, 1, "admin_testing");
             context.Network = gameNetwork;
+
+            // Create world manager.
+            worldManager = new WorldManager(context);
+            context.WorldManager = worldManager;
 
             base.Initialize();
         }
@@ -88,7 +118,8 @@ namespace AsteriaClient
             // Create a new SpriteBatch, which can be used to draw textures.
             spriteBatch = new SpriteBatch(GraphicsDevice);
 
-            background = Content.Load<Texture2D>("Background2");
+            textureManager.LoadTextures(Content);
+            background = textureManager.Get("Ground");
         }
 
         /// <summary>
@@ -97,7 +128,8 @@ namespace AsteriaClient
         /// </summary>
         protected override void UnloadContent()
         {
-            // TODO: Unload any non ContentManager content here
+            // TODO: [HIGH] clear character info and zones.
+            gameNetwork.Quit();
         }
 
         /// <summary>
@@ -107,11 +139,21 @@ namespace AsteriaClient
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Update(GameTime gameTime)
         {
-            // Allows the game to exit.
-            if (Keyboard.GetState().IsKeyDown(Keys.Escape))
-                this.Exit();
+            inputManager.Update(gameTime);
 
+            // Allows the game to exit.
+            if (inputManager.CheckKeyPress(Keys.Escape))
+                context.Gui.TogglePauseMenu();
+
+            // Chat / Command shortcut keys.
+            if (inputManager.CheckKeyPress(Keys.Enter) && !gameInterface.Console.InputFocus)
+                context.Gui.SetConsoleFocus();
+            else if (inputManager.CheckKeyPress(Keys.OemQuestion) && !gameInterface.Console.InputFocus)
+                context.Gui.SetConsoleFocus("/");
+
+            gameNetwork.Update(gameTime);
             gameInterface.Update(gameTime);
+            worldManager.Update(gameTime, context);
 
             base.Update(gameTime);
         }
@@ -125,13 +167,18 @@ namespace AsteriaClient
             GraphicsDevice.Clear(Color.Black);
 
             gameInterface.manager.BeginDraw(gameTime);
+            spriteBatch.Begin(SpriteSortMode.BackToFront, BlendState.NonPremultiplied);
 
             gameInterface.Draw(gameTime);
 
-            spriteBatch.Begin();
-            spriteBatch.Draw(background, new Rectangle(0, 0, graphics.PreferredBackBufferWidth, graphics.PreferredBackBufferHeight), Color.White);
-            spriteBatch.End();
+            if (gameNetwork.State == WorldConnection.WorldConnectionState.InGame)
+            {
+                worldManager.Draw(spriteBatch, new Rectangle(0, 0, graphics.PreferredBackBufferWidth, graphics.PreferredBackBufferHeight));
+            }
 
+            spriteBatch.Draw(background, new Rectangle(0, 0, graphics.PreferredBackBufferWidth, graphics.PreferredBackBufferHeight), null,  Color.White, 0f, Vector2.Zero, SpriteEffects.None, 1f);
+
+            spriteBatch.End();
             gameInterface.manager.EndDraw();
 
             base.Draw(gameTime);
@@ -143,7 +190,7 @@ namespace AsteriaClient
         /// <param name="message"></param>
         private void ToLog(string message)
         {
-            gameInterface.Console.MessageBuffer.Add(new ConsoleMessage(message, 3));
+            gameInterface.AddDebugMessage(message);
         }
         #endregion
     }

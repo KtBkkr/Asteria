@@ -26,7 +26,7 @@ namespace AsteriaLibrary.Entities
         /// <summary>
         /// Returns the current value of the attribute.
         /// </summary>
-        public int Value { get; set; }
+        public float Value { get; set; }
         #endregion
 
         #region WSE Specific Properties
@@ -56,9 +56,9 @@ namespace AsteriaLibrary.Entities
         /// <param name="name"></param>
         /// <param name="description"></param>
         /// <param name="value"></param>
-        public EntityAttribute(string name, string description, int value)
+        public EntityAttribute(string name, string description, float value)
         {
-            this.Name = name.ToLowerInvariant();
+            this.Name = name;
             this.Description = description;
             this.Value = value;
         }
@@ -70,7 +70,7 @@ namespace AsteriaLibrary.Entities
         /// <param name="description"></param>
         public EntityAttribute(string name, string description)
         {
-            this.Name = name.ToLowerInvariant();
+            this.Name = name;
             this.Description = description;
         }
 
@@ -79,9 +79,9 @@ namespace AsteriaLibrary.Entities
         /// </summary>
         /// <param name="name"></param>
         /// <param name="value"></param>
-        public EntityAttribute(string name, int value)
+        public EntityAttribute(string name, float value)
         {
-            this.Name = name.ToLowerInvariant();
+            this.Name = name;
             this.Value = value;
         }
         #endregion

@@ -12,6 +12,7 @@ namespace AsteriaClient.Zones
     public class ZoneManager
     {
         #region Fields
+        private Context context;
         private object zoneMngrLock = new object();
         private List<Zone> zones = new List<Zone>();
         private SortedList<int, Zone> entity_lookup = new SortedList<int, Zone>();
@@ -28,18 +29,36 @@ namespace AsteriaClient.Zones
         /// Creates a new ZoneManager instance.
         /// This is used by the server to manage world zones.
         /// </summary>
-        public ZoneManager()
+        public ZoneManager(Context context)
         {
+            this.context = context;
         }
         #endregion
 
         #region Methods
+        public void Update()
+        {
+            foreach (Zone zone in zones)
+            {
+                zone.Update();
+            }
+        }
+
+        #region Zone Management
         public void AddZone(Zone zone)
         {
             lock (zoneMngrLock)
             {
                 zones.Add(zone);
                 zone_lookup.Add(zone.Id, zone);
+
+                foreach (Entity e in zone.AllEntities)
+                {
+                    if (entity_lookup.ContainsKey(e.Id))
+                        entity_lookup[e.Id] = zone;
+                    else
+                        entity_lookup.Add(e.Id, zone);
+                }
             }
         }
 
@@ -71,6 +90,9 @@ namespace AsteriaClient.Zones
             }
         }
 
+        /// <summary>
+        /// Removes all zones from the zone manager.
+        /// </summary>
         public void RemoveAllZones()
         {
             lock (zoneMngrLock)
@@ -81,12 +103,18 @@ namespace AsteriaClient.Zones
             }
         }
 
+        /// <summary>
+        /// Checks if a zone exists in the zone manager.
+        /// </summary>
         public bool ZoneExists(int id)
         {
             lock (zoneMngrLock)
                 return zone_lookup.ContainsKey(id);
         }
 
+        /// <summary>
+        /// Returns a zone by ID if it exists in the manager
+        /// </summary>
         public Zone GetZone(int id)
         {
             lock (zoneMngrLock)
@@ -97,7 +125,9 @@ namespace AsteriaClient.Zones
                     return null;
             }
         }
+        #endregion
 
+        #region Entity Management
         public Entity GetEntity(int id)
         {
             lock (zoneMngrLock)
@@ -113,9 +143,11 @@ namespace AsteriaClient.Zones
         {
             lock (zoneMngrLock)
             {
+                // Entity already exists.
                 if (GetEntity(entity.Id) != null)
                     return false;
 
+                // Zone doesn't exist.
                 Zone zone = GetZone(entity.Zone);
                 if (zone == null)
                     return false;
@@ -173,6 +205,7 @@ namespace AsteriaClient.Zones
 
         /// <summary>
         /// Removes all entities in the zone manager.
+        /// NOTE: THIS REMOVES ALL ENTITIES IN EVERY ZONE
         /// </summary>
         public void RemoveAllEntities()
         {
@@ -213,20 +246,16 @@ namespace AsteriaClient.Zones
         {
             lock (zoneMngrLock)
             {
-                Zone oldZone = GetZone(id);
+                Zone zone = GetZone(id);
 
-                Zone newZone = new Zone();
-                newZone.Initialize(id, oldZone.Name, oldZone.Width, oldZone.Height);
-
-                foreach (Entity entity in oldZone.Entities)
+                foreach (Entity entity in zone.Entities)
                     entity_lookup.Remove(entity.Id);
 
-                zones.Remove(oldZone);
-                zone_lookup.Remove(id);
-
-                AddZone(newZone);
+                zone.Clear();
             }
         }
+        #endregion
+
         #endregion
     }
 }

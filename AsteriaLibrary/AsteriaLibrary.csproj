@@ -55,19 +55,36 @@
     <Compile Include="Data\LinkedList.cs" />
     <Compile Include="Data\LinkedNode.cs" />
     <Compile Include="Data\ObjectPool.cs" />
+    <Compile Include="Entities\EntityType.cs" />
+    <Compile Include="Entities\Fleet.cs" />
+    <Compile Include="Entities\Ship.cs" />
+    <Compile Include="Entities\Ships\Fighter.cs" />
+    <Compile Include="Entities\Ships\Mothership.cs" />
+    <Compile Include="Entities\Ships\Swarmer.cs" />
+    <Compile Include="Entities\Structure.cs" />
+    <Compile Include="Entities\Structures\MissileLauncher.cs" />
+    <Compile Include="Entities\World\Asteroid.cs" />
+    <Compile Include="Entities\Structures\BasicLaser.cs" />
     <Compile Include="Entities\Character.cs" />
+    <Compile Include="Entities\Structures\EnergyRelay.cs" />
+    <Compile Include="Entities\Structures\EnergyStation.cs" />
     <Compile Include="Entities\Entity.cs" />
     <Compile Include="Entities\EntityAttribute.cs" />
     <Compile Include="Entities\EntityProperty.cs" />
+    <Compile Include="Entities\Structures\MineralMiner.cs" />
+    <Compile Include="Entities\Structures\PulseLaser.cs" />
+    <Compile Include="Entities\Unit.cs" />
     <Compile Include="Math\Point.cs" />
     <Compile Include="Math\Size.cs" />
     <Compile Include="Math\Vector.cs" />
     <Compile Include="Messages\BaseClientMessage.cs" />
     <Compile Include="Messages\BaseServerMessage.cs" />
+    <Compile Include="Messages\ChatType.cs" />
     <Compile Include="Messages\ClientToServerMessage.cs" />
     <Compile Include="Messages\MessageType.cs" />
     <Compile Include="Messages\ServerToClientMessage.cs" />
     <Compile Include="Messages\ServerToServerMessage.cs" />
+    <Compile Include="Shared\Arguments.cs" />
     <Compile Include="Shared\Logger.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Serialization\BaseClientMessageSerializer.cs" />
@@ -79,8 +96,11 @@
     <Compile Include="Shared\DatabaseHelper.cs" />
     <Compile Include="Shared\InventoryChangeType.cs" />
     <Compile Include="Shared\IStringFormattable.cs" />
-    <Compile Include="Shared\PlayerAction.cs" />
+    <Compile Include="Messages\PlayerAction.cs" />
     <Compile Include="Shared\WorldServerInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Entities\Structures\TacticalLaser.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

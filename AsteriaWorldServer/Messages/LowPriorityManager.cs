@@ -26,8 +26,6 @@ namespace AsteriaWorldServer.Messages
     {
         #region Fields
         private ServerContext context;
-        private DalProvider dal;
-        private ChatProcessor chatProcessor;
 
         ServerToServerMessageSerializer serializer = new ServerToServerMessageSerializer();
         byte[] bytesOut;
@@ -41,12 +39,10 @@ namespace AsteriaWorldServer.Messages
         #endregion
 
         #region Constructors
-        public LowPriorityManager(ServerContext context, DalProvider dal)
+        public LowPriorityManager(ServerContext context)
             : base()
         {
             this.context = context;
-            this.dal = dal;
-            this.chatProcessor = new ChatProcessor(context);
         }
         #endregion
 
@@ -83,7 +79,7 @@ namespace AsteriaWorldServer.Messages
                 msg = QueueManager.ChatQueueReadWrite;
                 if (msg != null)
                 {
-                    chatProcessor.HandleChatMessage(msg);
+                    context.ChatProcessor.ProcessMessage(msg);
                     isIdle = false;
                 }
 
@@ -134,19 +130,19 @@ namespace AsteriaWorldServer.Messages
                     break;
 
                 case MessageType.C2S_GetCharacterList:
-                    wm = dal.GetAccountCharacterListMessage(mpr);
+                    wm = context.Dal.GetAccountCharacterListMessage(mpr);
                     break;
 
                 case MessageType.C2S_DeleteCharacter:
-                    wm = dal.DeleteCharacter(msg);
+                    wm = context.Dal.DeleteCharacter(msg);
                     break;
 
                 case MessageType.C2S_CreateCharacter:
-                    wm = dal.CreateCharacter(mpr.AccountId, msg);
+                    wm = context.Dal.CreateCharacter(mpr.AccountId, msg);
                     break;
 
                 case MessageType.C2S_StartCharacter:
-                    ThreadPool.QueueUserWorkItem(new WaitCallback(dal.LoadPlayerCharacter), new int[] { mpr.AccountId, msg.CharacterId });
+                    ThreadPool.QueueUserWorkItem(new WaitCallback(context.Dal.LoadPlayerCharacter), new int[] { mpr.AccountId, msg.CharacterId });
                     break;
 
                 case MessageType.C2S_PlayerLogoutRequest:
@@ -155,6 +151,7 @@ namespace AsteriaWorldServer.Messages
                     mpr.LogoutCharacterGranted = true;
                     wm = ServerToClientMessage.CreateMessageSafe(msg.Sender);
                     wm.MessageType = MessageType.S2C_PlayerLoggedOut;
+                    context.Mpt.Disconnect(msg.Sender, "Player logout.", 15000);
                     break;
 
                 case MessageType.C2S_CharacterLogoutRequest:

@@ -94,10 +94,13 @@ namespace AsteriaWorldServer.Messages
                         {
 #if DEBUG
                             MasterPlayerRecord mpr = context.Mpt.GetByEndPoint(sender.RemoteEndpoint);
-                            if (mpr.State == ClientState.InWorld)
-                                Logger.Output(this, "Deserialized message: {0}->{1} from: {2}.", msg.MessageType, (PlayerAction)msg.Action, sender.RemoteEndpoint);
-                            else
-                                Logger.Output(this, "Deserialized message: {0}->{1} from: {2}.", msg.MessageType, msg.Action, sender.RemoteEndpoint);
+                            if (mpr != null)
+                            {
+                                if (mpr.State == ClientState.InWorld)
+                                    Logger.Output(this, "Deserialized message: {0}->{1} from: {2}.", msg.MessageType, (PlayerAction)msg.Action, sender.RemoteEndpoint);
+                                else
+                                    Logger.Output(this, "Deserialized message: {0}->{1} from: {2}.", msg.MessageType, msg.Action, sender.RemoteEndpoint);
+                            }
 #endif
                             msg.Sender = sender;
                             HandleClientToServerMessage(msg);

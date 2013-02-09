@@ -212,6 +212,12 @@ namespace AsteriaClient.Interface.Controls
                 PositionControls();
             }
         }
+
+        public bool InputFocus
+        {
+            get { return txtMain.Focused; }
+            set { txtMain.Focused = value; }
+        }
         #endregion
 
         #region Events
@@ -387,6 +393,11 @@ namespace AsteriaClient.Interface.Controls
         {
             ConsoleChannel ch = channels[cmbMain.Text];
             if (ch != null) txtMain.TextColor = ch.Color;
+        }
+
+        public void AddInput(string text)
+        {
+            txtMain.Text += text;
         }
 
         void txtMain_KeyDown(object sender, KeyEventArgs e)

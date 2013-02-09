@@ -110,7 +110,6 @@ namespace AsteriaWorldServer.Messages
                         // Remove the client from the world.
                         if (node.Value.LogoutCharacterGranted && node.Value.State != ClientState.CharacterLoggingOut)
                         {
-                            // TODO: [MID] the RemoveEntity message seems to be sent to the player who is logging out..
                             game.LogoutCharacter(c.CharacterId);
                             Logger.Output(this, "Logout granted for character: {0}, connection state: {1}!", c.CharacterId, c.Sender.Status);
                             node.Value.State = ClientState.CharacterLoggingOut;

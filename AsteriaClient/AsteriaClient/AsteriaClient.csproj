@@ -112,6 +112,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BuildingHelper.cs" />
+    <Compile Include="Config.cs" />
     <Compile Include="Context.cs" />
     <Compile Include="Delegates.cs" />
     <Compile Include="EventArgs.cs" />
@@ -137,6 +139,9 @@
     <Compile Include="Interface\Controls\EventArgs.cs" />
     <Compile Include="Interface\Controls\EventedList.cs" />
     <Compile Include="Interface\Controls\ExitDialog.cs" />
+    <Compile Include="Interface\DebugWindow.cs" />
+    <Compile Include="Interface\InputManager.cs" />
+    <Compile Include="Interface\PauseMenu.cs" />
     <Compile Include="Interface\Controls\External\Crc32.cs" />
     <Compile Include="Interface\Controls\External\Shared.cs" />
     <Compile Include="Interface\Controls\External\ZipDirEntry.cs" />
@@ -177,11 +182,21 @@
     <Compile Include="Interface\Controls\Utilities.cs" />
     <Compile Include="Interface\Controls\Window.cs" />
     <Compile Include="Interface\GameInterface.cs" />
-    <Compile Include="Interface\GuiConsole.cs" />
     <Compile Include="Network\GameNetwork.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Game1.cs" />
+    <Compile Include="Sprites\Asteroid.cs" />
+    <Compile Include="Sprites\Relay.cs" />
+    <Compile Include="Sprites\Shots\Beam.cs" />
+    <Compile Include="Sprites\Shots\BeamMining.cs" />
+    <Compile Include="Sprites\Sprite.cs" />
+    <Compile Include="Sprites\SpriteEnergyRelay.cs" />
+    <Compile Include="Sprites\SpriteEnergyStation.cs" />
+    <Compile Include="Sprites\SpriteMineralMiner.cs" />
+    <Compile Include="Sprites\SpriteUnit.cs" />
+    <Compile Include="TextureManager.cs" />
+    <Compile Include="WorldManager.cs" />
     <Compile Include="Zones\Zone.cs" />
     <Compile Include="Zones\ZoneManager.cs" />
   </ItemGroup>

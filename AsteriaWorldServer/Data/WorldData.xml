@@ -3,7 +3,7 @@
   <!-- World Parameters -->
   <Params>
     <!-- Spawn position for new characters -->
-    <!-- TODO: Possibly make this more dynamic.. -->
+    <!-- TODO: Make this more dynamic.. -->
     <PlayerStartPoint>0,0</PlayerStartPoint>
 
     <!-- Spawn zone for new characters -->

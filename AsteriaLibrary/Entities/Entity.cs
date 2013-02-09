@@ -15,6 +15,7 @@ namespace AsteriaLibrary.Entities
         #region Fields
         private int id;
         private int typeId;
+        private DateTime created;
         private string name;
         private int zone;
         private Point position;
@@ -22,6 +23,16 @@ namespace AsteriaLibrary.Entities
 
         protected Dictionary<string, EntityAttribute> attributes;
         protected Dictionary<string, EntityProperty> properties;
+
+        /// <summary>
+        /// For internal asteria framework infrastructure support only, do not use!
+        /// </summary>
+        public DateTime LastSaved = DateTime.MinValue;
+
+        /// <summary>
+        /// For internal asteria framework infrastructure support only, do not use!
+        /// </summary>
+        public object Tag;
         #endregion
 
         #region Properties
@@ -41,6 +52,15 @@ namespace AsteriaLibrary.Entities
         {
             get { return typeId; }
             set { typeId = value; }
+        }
+
+        /// <summary>
+        /// Entity creation time.
+        /// </summary>
+        public DateTime Created
+        {
+            get { return created; }
+            set { created = value; }
         }
 
         /// <summary>
@@ -106,23 +126,6 @@ namespace AsteriaLibrary.Entities
         /// <summary>
         /// Creates a new Entity instance.
         /// </summary>
-        /// <param name="id"></param>
-        /// <param name="typeId"></param>
-        /// <param name="name"></param>
-        public Entity(int id, int typeId, string name)
-        {
-            this.id = id;
-            this.typeId = typeId;
-            this.Name = name;
-            this.owner = -1;
-
-            attributes = new Dictionary<string, EntityAttribute>();
-            properties = new Dictionary<string, EntityProperty>();
-        }
-
-        /// <summary>
-        /// Creates a new Entity instance.
-        /// </summary>
         /// <param name="data"></param>
         public Entity(string data)
         {
@@ -146,21 +149,20 @@ namespace AsteriaLibrary.Entities
         /// <summary>
         /// Returns an entity attribute value.
         /// </summary>
-        public int GetAttribute(string name)
+        public float GetAttribute(string name)
         {
             if (attributes.ContainsKey(name))
                 return attributes[name].Value;
 #if DEBUG
-            throw (new Exception("Attribute value not found: " + name));
-#else
-            return -1;
+            Logger.Output(this, "Attribute value not found: {0}", name);
 #endif
+            return -1;
         }
 
         /// <summary>
         /// Sets an entity Attribute
         /// </summary>
-        public void SetAttribute(string name, int value)
+        public void SetAttribute(string name, float value)
         {
             if (attributes.ContainsKey(name))
                 attributes[name].Value = value;
@@ -171,7 +173,7 @@ namespace AsteriaLibrary.Entities
         /// <summary>
         /// Sets an entity attribute.
         /// </summary>
-        public void SetAttribute(string name, int value, string description)
+        public void SetAttribute(string name, float value, string description)
         {
             if (attributes.ContainsKey(name))
             {
@@ -190,10 +192,9 @@ namespace AsteriaLibrary.Entities
             if (properties.ContainsKey(name))
                 return properties[name].Value;
 #if DEBUG
-            throw (new Exception("Property value not found: " + name));
-#else
-            return "";
+            Logger.Output(this, "Property value not found: {0}", name);
 #endif
+            return "";
         }
 
         /// <summary>
@@ -239,7 +240,7 @@ namespace AsteriaLibrary.Entities
 
         #region IStringFormattable Members
         /// <summary>
-        /// Generic eneity format for sending to clients.
+        /// Generic entity format for sending to clients.
         /// </summary>
         /// <returns></returns>
         public virtual string ToFormatString()
@@ -255,6 +256,8 @@ namespace AsteriaLibrary.Entities
             sb.Append(Zone);
             sb.Append(":");
             sb.Append(Position.ToString());
+            sb.Append(":");
+            sb.Append(Owner);
             sb.Append(":");
 
             int attribCount = 0;
@@ -291,7 +294,6 @@ namespace AsteriaLibrary.Entities
         /// <summary>
         /// Parses the data parameter and populates the entity properties/attributes with data elements.
         /// </summary>
-        /// <param name="data"></param>
         public virtual void FromFormatString(string data)
         {
             // NOTE: this absolutely must be kept in sync with ToFormatString()
@@ -299,25 +301,29 @@ namespace AsteriaLibrary.Entities
             FromFormatString(data, out temp);
         }
 
-        protected void FromFormatString(string data, out int consumedElements)
+        /// <summary>
+        /// Sets unique fields based on data in a format string.
+        /// </summary>
+        protected virtual void FromFormatString(string data, out int consumedElements)
         {
             // NOTE: this absolutely must be kept in sync with ToFormatString()
             string[] elements = data.Split(':');
             int counter = 0;
 
-            id = int.Parse(elements[counter++]);
+            Id = int.Parse(elements[counter++]);
             typeId = int.Parse(elements[counter++]);
             Name = elements[counter++];
             Zone = int.Parse(elements[counter++]);
-            position = (Point)elements[counter++];
+            Position = (Point)elements[counter++];
+            Owner = int.Parse(elements[counter++]);
 
             int attributeCount = int.Parse(elements[counter++]);
             for (int i = 0; i < attributeCount; i++)
             {
                 int comma = elements[counter].IndexOf(',');
-                string attributeName = elements[counter].Substring(0, comma).ToLowerInvariant();
+                string attributeName = elements[counter].Substring(0, comma);
                 string attributeValue = elements[counter].Substring(comma + 1);
-                EntityAttribute ea = new EntityAttribute(attributeName, int.Parse(attributeValue));
+                EntityAttribute ea = new EntityAttribute(attributeName, (float)double.Parse(attributeValue));
                 Attributes.Add(attributeName, ea);
                 counter++;
             }
@@ -326,7 +332,7 @@ namespace AsteriaLibrary.Entities
             for (int i = 0; i < propertyCount; i++)
             {
                 int comma = elements[counter].IndexOf(',');
-                string propertyName = elements[counter].Substring(0, comma).ToLowerInvariant();
+                string propertyName = elements[counter].Substring(0, comma);
                 string propertyValue = elements[counter].Substring(comma + 1);
                 EntityProperty ep = new EntityProperty(propertyName, null, propertyValue);
                 Properties.Add(propertyName, ep);

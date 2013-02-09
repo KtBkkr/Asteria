@@ -6,8 +6,8 @@ using System.Xml;
 using System.Xml.Linq;
 using AsteriaLibrary.Entities;
 using AsteriaLibrary.Math;
-using AsteriaLibrary.Zones;
 using AsteriaLibrary.Shared;
+using AsteriaWorldServer.Zones;
 
 namespace AsteriaWorldServer
 {
@@ -87,7 +87,7 @@ namespace AsteriaWorldServer
                     var properties = from a in node.Elements("Properties").Descendants()
                                      select new { Name = a.Name.LocalName, Value = a.Value };
 
-                    foreach (var v in attributes)
+                    foreach (var v in properties)
                         ed.Properties.Add(v.Name, v.Value);
 
                     entities.Add(ed);
@@ -120,39 +120,39 @@ namespace AsteriaWorldServer
             }
         }
 
-        /// <summary>
-        /// Loads all static entities defined in the WorldData.xml
-        /// Note that this can only be done after the IZoneManager instance has been initialized.
-        /// </summary>
-        /// <param name="zoneManager"></param>
-        public void LoadStaticEntities(ZoneManager zoneManager)
-        {
-            XmlNodeList nodes;
-            XmlDocument xd = new XmlDocument();
-            xd.Load("Data/WorldData.xml");
+        ///// <summary>
+        ///// Loads all static entities defined in the WorldData.xml
+        ///// Note that this can only be done after the IZoneManager instance has been initialized.
+        ///// </summary>
+        ///// <param name="zoneManager"></param>
+        //public void LoadStaticEntities(ZoneManager zoneManager)
+        //{
+        //    XmlNodeList nodes;
+        //    XmlDocument xd = new XmlDocument();
+        //    xd.Load("Data/WorldData.xml");
 
-            // Add pickable objects to the world. 
-            nodes = xd.SelectNodes("//PickableItems/Item");
-            foreach (XmlNode node in nodes)
-            {
-                if (node.NodeType == XmlNodeType.Comment)
-                    continue;
+        //    // Add pickable objects to the world. 
+        //    nodes = xd.SelectNodes("//PickableItems/Item");
+        //    foreach (XmlNode node in nodes)
+        //    {
+        //        if (node.NodeType == XmlNodeType.Comment)
+        //            continue;
 
-                string location = node.SelectSingleNode("Location").InnerText;
-                int typeId = Convert.ToInt32(node.Attributes["id"].Value);
-                Entity e = new Entity(GameProcessor.GenerateEntityID(), typeId, "");
-                Point p = (Point)location;
-                e.Position = p;
+        //        string location = node.SelectSingleNode("Location").InnerText;
+        //        int typeId = Convert.ToInt32(node.Attributes["id"].Value);
+        //        Entity e = new Entity(GameProcessor.GenerateEntityID(), typeId, "");
+        //        Point p = (Point)location;
+        //        e.Position = p;
 
-                //if (node.Attributes["Amount"] != null)
-                //{
-                //    // TODO: Amount node is currently only used for gold. If there are more items which canhave an amount
-                //    // we must specify how to implement this.
-                //    e.Gold = Convert.ToUInt32(node.Attributes["Amount"].Value);
-                //}
-                zoneManager.AddEntity(e);
-            }
-        }
+        //        //if (node.Attributes["Amount"] != null)
+        //        //{
+        //        //    // TODO: Amount node is currently only used for gold. If there are more items which canhave an amount
+        //        //    // we must specify how to implement this.
+        //        //    e.Gold = Convert.ToUInt32(node.Attributes["Amount"].Value);
+        //        //}
+        //        zoneManager.AddEntity(e);
+        //    }
+        //}
 
         ///// <summary>
         ///// Returns the player class with given typeId or null if no class found.
@@ -171,8 +171,6 @@ namespace AsteriaWorldServer
         /// <summary>
         /// Returns the entity class with given typeId or null if no class found.
         /// </summary>
-        /// <param name="typeId"></param>
-        /// <returns></returns>
         public EntityData GetEntityData(int typeId)
         {
             var result = from c in entities where c.TypeId == typeId select c;
@@ -180,6 +178,15 @@ namespace AsteriaWorldServer
                 return result.First();
             else
                 return null;
+        }
+
+        public int GetEntityType(string name)
+        {
+            var result = from c in entities where c.Name == name select c;
+            if (result.Count() > 0)
+                return result.First().TypeId;
+            else
+                return -1;
         }
         #endregion
     }

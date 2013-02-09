@@ -22,9 +22,9 @@ namespace AsteriaLibrary.Client
         public enum WorldConnectionState
         {
             /// <summary>
-            /// NotConnected - initial state.
+            /// Disconnected - communication failure.
             /// </summary>
-            NotConnected,
+            Disconnected,
 
             /// <summary>
             /// Connect message sent, awaiting reply.
@@ -55,11 +55,6 @@ namespace AsteriaLibrary.Client
             /// Connected to the world server and playing a character.
             /// </summary>
             InGame,
-
-            /// <summary>
-            /// Disconnected - communication failure.
-            /// </summary>
-            Disconnected,
         }
 
         public delegate void StateChangeHandler(WorldConnectionState state);
@@ -71,7 +66,7 @@ namespace AsteriaLibrary.Client
         public event WorldClientMsgEvent CharManagementMessageReceived;
 
         protected WorldClient worldClient;
-        private WorldConnectionState state = WorldConnectionState.NotConnected;
+        private WorldConnectionState state = WorldConnectionState.Disconnected;
 
         private List<Character> characterList = null;
         private string host;
@@ -127,7 +122,7 @@ namespace AsteriaLibrary.Client
         {
             get
             {
-                if (state == WorldConnectionState.InGame)
+                if (state == WorldConnectionState.CharacterManagement || state == WorldConnectionState.InGame)
                     return worldClient;
                 else
                     return null;
@@ -141,10 +136,8 @@ namespace AsteriaLibrary.Client
         #endregion
 
         #region Constructors
-        public WorldConnection(string host, int port, string protocolVersion)
+        public WorldConnection(string protocolVersion)
         {
-            this.host = host;
-            this.port = port;
             this.protocolVersion = protocolVersion;
         }
         #endregion
@@ -156,8 +149,10 @@ namespace AsteriaLibrary.Client
         /// </summary>
         /// <param name="secretkey"></param>
         /// <returns></returns>
-        public bool ConnectToWorld(string secretkey)
+        public bool ConnectToWorld(string host, int port, string secretkey)
         {
+            this.host = host;
+            this.port = port;
             this.secretkey = secretkey;
 
             // TODO: [LOW] find a simpler way to set the account id.
@@ -195,6 +190,23 @@ namespace AsteriaLibrary.Client
         }
 
         /// <summary>
+        /// Disconnects from the world, disposes the client, and clears account/character info.
+        /// </summary>
+        public void Disconnect()
+        {
+            StopReceiving();
+
+            worldClient.Stop();
+            worldClient.Dispose();
+
+            characterList = null;
+            accountId = -1;
+            characterId = -1;
+
+            State = WorldConnectionState.Disconnected;
+        }
+
+        /// <summary>
         /// Creates a new character on the world server.
         /// </summary>
         /// <param name="GameData"></param>
@@ -206,9 +218,9 @@ namespace AsteriaLibrary.Client
 
             // Prepare char add request message.
             ClientToServerMessage pm = ClientToServerMessage.CreateMessageSafe();
-            pm.MessageType = MessageType.C2S_CreateCharacter;
             pm.AccountId = worldClient.AccountId;
             pm.GameData = GameData;
+            pm.MessageType = MessageType.C2S_CreateCharacter;
             pm.DeliveryMethod = NetDeliveryMethod.ReliableUnordered;
 
             return worldClient.SendMessage(pm);
@@ -226,9 +238,9 @@ namespace AsteriaLibrary.Client
                 return false;
 
             ClientToServerMessage pm = ClientToServerMessage.CreateMessageSafe();
-            pm.MessageType = MessageType.C2S_DeleteCharacter;
             pm.AccountId = worldClient.AccountId;
             pm.CharacterId = characterId;
+            pm.MessageType = MessageType.C2S_DeleteCharacter;
             pm.DeliveryMethod = NetDeliveryMethod.ReliableUnordered;
 
             return worldClient.SendMessage(pm);
@@ -247,9 +259,9 @@ namespace AsteriaLibrary.Client
             State = WorldConnectionState.Starting;
 
             ClientToServerMessage pm = ClientToServerMessage.CreateMessageSafe();
-            pm.MessageType = MessageType.C2S_StartCharacter;
             pm.AccountId = worldClient.AccountId;
             pm.CharacterId = characterId;
+            pm.MessageType = MessageType.C2S_StartCharacter;
             pm.DeliveryMethod = NetDeliveryMethod.ReliableUnordered;
 
             return worldClient.SendMessage(pm);
@@ -277,7 +289,7 @@ namespace AsteriaLibrary.Client
         /// <summary>
         /// Starts to dispatch incoming messages through the events.
         /// </summary>
-        public void StartReceiving()
+        private void StartReceiving()
         {
             isDispatching = true;
             MessageType type;
@@ -289,7 +301,7 @@ namespace AsteriaLibrary.Client
         /// <summary>
         /// Stops dispatching messages.
         /// </summary>
-        public void StopReceiving()
+        private void StopReceiving()
         {
             isDispatching = false;
         }

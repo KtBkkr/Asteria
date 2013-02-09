@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using AsteriaLibrary.Entities;
-using AsteriaLibrary.Zones;
 using AsteriaLibrary.Shared;
+using AsteriaWorldServer.Zones;
+using AsteriaLibrary.Messages;
+using System.Threading;
 
-namespace AsteriaWorldServer
+namespace AsteriaWorldServer.Zones
 {
     /// <summary>
     /// Provides zones in a 2D top down view on the world.
@@ -55,11 +57,12 @@ namespace AsteriaWorldServer
             foreach (Zone zone in removeList)
             {
                 Logger.Output(this, "Zone ID: {0} ({1}) inactive for 5 minutes.. Saving and removing.", zone.Id, zone.Name);
-                SaveZone(zone);
+                ThreadPool.QueueUserWorkItem(new WaitCallback(SaveZone), zone);
                 RemoveZone(zone.Id);
             }
         }
 
+        #region Zone Management
         public void AddZone(Zone zone)
         {
             lock (zoneMngrLock)
@@ -77,18 +80,22 @@ namespace AsteriaWorldServer
             }
         }
 
-        public void AddZone(int id, string name, int width, int height)
+        public bool AddZone(string name, int width, int height)
         {
             lock (zoneMngrLock)
             {
-                Zone z = new Zone();
-                z.Initialize(id, name, width, height);
-                zones.Add(z);
-                zone_lookup.Add(z.Id, z);
+                Zone z = context.Dal.CreateZone(name, width, height);
+                if (z != null)
+                {
+                    zones.Add(z);
+                    zone_lookup.Add(z.Id, z);
+                    return true;
+                }
+                return false;
             }
         }
 
-        public void LoadZone(int zoneId)
+        public bool LoadZone(int zoneId)
         {
             Zone zone = context.Dal.LoadZone(zoneId);
             if (zone != null)
@@ -96,57 +103,142 @@ namespace AsteriaWorldServer
                 // Load any entities from the database then add it.
                 context.Dal.LoadZoneEntities(zone);
                 AddZone(zone);
+                return true;
             }
+            return false;
         }
 
         /// <summary>
         /// Saves a zone and its entities (non characters) to the database.
         /// </summary>
-        /// <param name="zone"></param>
-        public void SaveZone(Zone zone)
+        public void SaveZone(object zoneObject)
         {
+            Zone zone = zoneObject as Zone;
             context.Dal.SaveZone(zone);
 
             foreach (Entity e in zone.Entities)
-                context.Dal.SaveEntity(e);
-        }
-
-        public void SaveAllZones()
-        {
-            foreach (Zone zone in zones)
             {
-                context.Dal.SaveZone(zone);
-
-                foreach (Entity e in zone.Entities)
-                    context.Dal.SaveEntity(e);
-
-                Logger.Output(this, "Saving zone ID:{0} ({1}). W:{2} H:{3}. Entities: {4}.", zone.Id, zone.Name, zone.Width, zone.Height, zone.Entities.Count);
-            }
-        }
-
-        public void RemoveZone(int id)
-        {
-            lock (zoneMngrLock)
-            {
-                if (zone_lookup.ContainsKey(id))
+                if (e is EnergyStation)
                 {
-                    Zone zone = GetZone(id);
-
-                    foreach (Entity e in zone.AllEntities)
-                        entity_lookup.Remove(e.Id);
-
-                    zones.Remove(zone);
-                    zone_lookup.Remove(id);
+                    ((EnergyStation)e).PrepareData();
+                    context.Dal.SaveEntity((EnergyStation)e);
+                }
+                else if (e is EnergyRelay)
+                {
+                    ((EnergyRelay)e).PrepareData();
+                    context.Dal.SaveEntity((EnergyRelay)e);
+                }
+                else if (e is MineralMiner)
+                {
+                    ((MineralMiner)e).PrepareData();
+                    context.Dal.SaveEntity((MineralMiner)e);
+                }
+                else if (e is BasicLaser)
+                {
+                    ((BasicLaser)e).PrepareData();
+                    context.Dal.SaveEntity((BasicLaser)e);
+                }
+                else if (e is PulseLaser)
+                {
+                    ((PulseLaser)e).PrepareData();
+                    context.Dal.SaveEntity((PulseLaser)e);
+                }
+                else if (e is TacticalLaser)
+                {
+                    ((TacticalLaser)e).PrepareData();
+                    context.Dal.SaveEntity((TacticalLaser)e);
+                }
+                else if (e is MissileLauncher)
+                {
+                    ((MissileLauncher)e).PrepareData();
+                    context.Dal.SaveEntity((MissileLauncher)e);
+                }
+                else if (e is Asteroid)
+                {
+                    ((Asteroid)e).PrepareData();
+                    context.Dal.SaveEntity((Asteroid)e);
+                }
+                else if (e is Unit)
+                {
+                    ((Unit)e).PrepareData();
+                    context.Dal.SaveEntity(((Unit)e));
                 }
             }
         }
 
+        /// <summary>
+        /// Saves all zones into the database.
+        /// </summary>
+        public void SaveAllZones(object obj)
+        {
+            int zcount = 0;
+            int ecount = 0;
+            foreach (Zone zone in zones)
+            {
+                SaveZone(zone);
+                Logger.Output(this, "Saving zone ID:{0} ({1}). W:{2} H:{3}. Entities: {4}.", zone.Id, zone.Name, zone.Width, zone.Height, zone.Entities.Count);
+                zcount++;
+            }
+            Logger.Output(this, "Zone save complete. Zone count: {0}, Entity Count: {1}.", zcount, ecount);
+        }
+
+        /// <summary>
+        /// Removes a zone from the zone manager but it remains in the database.
+        /// </summary>
+        public void RemoveZone(int zoneId)
+        {
+            lock (zoneMngrLock)
+            {
+                Zone zone = GetZone(zoneId);
+                if (zone != null)
+                {
+                    foreach (Entity e in zone.AllEntities)
+                        entity_lookup.Remove(e.Id);
+
+                    zones.Remove(zone);
+                    zone_lookup.Remove(zoneId);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Deletes a zone and its entities from the database.
+        /// NOTE: THIS IS NOT RECOVERABLE. THEY WILL BE GONE FOR GOOD.
+        /// </summary>
+        public bool DeleteZone(int zoneId)
+        {
+            lock (zoneMngrLock)
+            {
+                Zone zone = GetZone(zoneId);
+                if (zone != null)
+                {
+                    foreach (Entity e in zone.Entities)
+                    {
+                        context.Dal.DeleteEntity(e.Id);
+                        entity_lookup.Remove(e.Id);
+                    }
+
+                    context.Dal.DeleteZone(zone.Id);
+                    zones.Remove(zone);
+                    zone_lookup.Remove(zoneId);
+                    return true;
+                }
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Checks if a zone exists in the zone manager.
+        /// </summary>
         public bool ZoneExists(int id)
         {
             lock (zoneMngrLock)
                 return zone_lookup.ContainsKey(id);
         }
 
+        /// <summary>
+        /// Returns a zone by ID if it exists in the manager
+        /// </summary>
         public Zone GetZone(int id)
         {
             lock (zoneMngrLock)
@@ -157,6 +249,7 @@ namespace AsteriaWorldServer
                     return null;
             }
         }
+        #endregion
 
         #region Entity Management
         public Entity GetEntity(int id)
@@ -283,6 +376,56 @@ namespace AsteriaWorldServer
                     entity_lookup.Remove(entity.Id);
 
                 zone.Clear();
+            }
+        }
+        #endregion
+
+        #region Messages
+        /// <summary>
+        /// Buffers the message to all character entities of a single zone.
+        /// Note that the message parameter wm is not used directly, instead a copy is created.
+        /// </summary>
+        public void AddMessageToZone(Zone zone, ServerToClientMessage wm)
+        {
+            if (!zone.IsActive)
+                return;
+
+            foreach (Character c in zone.Characters)
+            {
+                // The copy is mandatory or we will end up overwritng messages
+                // which ar still in use after the serializer invokes FreeSafe!
+                c.MessageBuffer.Add(ServerToClientMessage.Copy(wm, c.Sender));
+            }
+        }
+
+        /// <summary>
+        /// Buffers the message to all character entities of a single zone.
+        /// Note that the message parameter wm is not used directly, instead a copy is created.
+        /// </summary>
+        public void AddMessageToZone(int zoneId, ServerToClientMessage wm)
+        {
+            Zone zone = GetZone(zoneId);
+            if (zone != null && zone.IsActive)
+                AddMessageToZone(zone, wm);
+        }
+
+        /// <summary>
+        /// Buffers the message to all character entities in every zone.
+        /// Note that the message parameter wm is not used directly, instead a copy is created.
+        /// </summary>
+        public void AddMessageToAllZones(ServerToClientMessage wm)
+        {
+            foreach (Zone zone in zones)
+            {
+                if (!zone.IsActive)
+                    continue;
+
+                foreach (Character c in zone.Characters)
+                {
+                    // The copy is mandatory or we will end up overwritng messages
+                    // which ar still in use after the serializer invokes FreeSafe!
+                    c.MessageBuffer.Add(ServerToClientMessage.Copy(wm, c.Sender));
+                }
             }
         }
         #endregion

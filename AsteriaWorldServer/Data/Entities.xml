@@ -1,12 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <XnaContent>
-
-  <!-- TypeId 1-500 are character classes  -->
-  <!-- TypeId 501-1000 are NPC's           -->
-  <!-- TypeId 1001-3000 are pickable items -->
-  <!-- TypeId 3001-5000 are mobs           -->
-  <!-- TypeId 5001-9999 are static objects -->
-
+  
+  <!-- Player Entities -->
+  
   <Entity>
     <TypeId>1</TypeId>
     <Name>Player</Name>
@@ -15,28 +11,261 @@
       <_gold>0</_gold>
     </Attributes>
     <Properties>
-      <_groups></_groups>
+      <_guilds></_guilds>
+      <_channels></_channels>
+      <_position>0,0</_position>
     </Properties>
   </Entity>
 
+  <!-- Building Units -->
+  
   <Entity>
     <TypeId>2</TypeId>
-    <Name>Structure</Name>
-    <Description>A persistant non moving structure.</Description>
+    <Name>Unit</Name>
+    <Description>A beattiful hand crafted wooden toy windmill.</Description>
+    <Attributes>
+      <_totalHealth>100</_totalHealth>
+      <_currentHealth>100</_currentHealth>
+      <_shield>0</_shield>
+      <_range>300</_range>
+      <_damage>10</_damage>
+      <_rate>2</_rate>
+      <_timer>0</_timer>
+      <_cost>0</_cost>
+      <_energyCost>0</_energyCost>
+    </Attributes>
   </Entity>
 
   <Entity>
     <TypeId>3</TypeId>
-    <Name>Ship</Name>
-    <Description>A moving unit type entity.</Description>
+    <Name>Energy Station</Name>
+    <Description>Generates and supplies power to other units.</Description>
+    <Attributes>
+      <_totalHealth>100</_totalHealth>
+      <_currentHealth>100</_currentHealth>
+      <_shield>0</_shield>
+      <_range>300</_range>
+      <_damage>10</_damage>
+      <_rate>2</_rate>
+      <_timer>0</_timer>
+      <_cost>0</_cost>
+      <_energyCost>0</_energyCost>
+
+      <_totalEnergy>300</_totalEnergy>
+      <_currentEnergy>0</_currentEnergy>
+
+      <_maxConnections>20</_maxConnections>
+    </Attributes>
   </Entity>
 
   <Entity>
     <TypeId>4</TypeId>
+    <Name>Energy Relay</Name>
+    <Description>A relay used to transport power to other units.</Description>
+    <Attributes>
+      <_totalHealth>100</_totalHealth>
+      <_currentHealth>100</_currentHealth>
+      <_shield>0</_shield>
+      <_range>300</_range>
+      <_damage>10</_damage>
+      <_rate>2</_rate>
+      <_timer>0</_timer>
+      <_cost>0</_cost>
+      <_energyCost>0</_energyCost>
+
+      <_maxConnections>3</_maxConnections>
+    </Attributes>
+    <Properties>
+      <_connections></_connections>
+    </Properties>
+  </Entity>
+
+  <Entity>
+    <TypeId>5</TypeId>
+    <Name>Mineral Miner</Name>
+    <Description>A mining laser used to get precious minerals from asteroids.</Description>
+    <Attributes>
+      <_totalHealth>100</_totalHealth>
+      <_currentHealth>100</_currentHealth>
+      <_shield>0</_shield>
+      <_range>300</_range>
+      <_damage>10</_damage>
+      <_rate>3</_rate>
+      <_timer>0</_timer>
+      <_cost>0</_cost>
+      <_energyCost>0</_energyCost>
+    </Attributes>
+  </Entity>
+
+  <Entity>
+    <TypeId>6</TypeId>
+    <Name>Basic Laser</Name>
+    <Description>A slow firing, mid damage, mid range laser turret.</Description>
+    <Attributes>
+      <_totalHealth>100</_totalHealth>
+      <_currentHealth>100</_currentHealth>
+      <_shield>0</_shield>
+      <_range>300</_range>
+      <_damage>10</_damage>
+      <_rate>2</_rate>
+      <_timer>0</_timer>
+      <_cost>0</_cost>
+      <_energyCost>0</_energyCost>
+    </Attributes>
+  </Entity>
+
+  <Entity>
+    <TypeId>7</TypeId>
+    <Name>Pulse Laser</Name>
+    <Description>A fast firing, mid range, low damage laser turret. (prioritizes missiles)</Description>
+    <Attributes>
+      <_totalHealth>100</_totalHealth>
+      <_currentHealth>100</_currentHealth>
+      <_shield>0</_shield>
+      <_range>300</_range>
+      <_damage>10</_damage>
+      <_rate>1</_rate>
+      <_timer>0</_timer>
+      <_cost>0</_cost>
+      <_energyCost>0</_energyCost>
+    </Attributes>
+  </Entity>
+
+  <Entity>
+    <TypeId>8</TypeId>
+    <Name>Tactical Laser</Name>
+    <Description>A slow firing, high damage, long range laser turret. (prioritizes large ships)</Description>
+    <Attributes>
+      <_totalHealth>100</_totalHealth>
+      <_currentHealth>100</_currentHealth>
+      <_shield>0</_shield>
+      <_range>300</_range>
+      <_damage>10</_damage>
+      <_rate>5</_rate>
+      <_timer>0</_timer>
+      <_cost>0</_cost>
+      <_energyCost>0</_energyCost>
+    </Attributes>
+  </Entity>
+
+  <Entity>
+    <TypeId>9</TypeId>
+    <Name>Missile Launcher</Name>
+    <Description>A slow firing, splash damage, long range missile turret. (costs minerals to fire)</Description>
+    <Attributes>
+      <_totalHealth>100</_totalHealth>
+      <_currentHealth>100</_currentHealth>
+      <_shield>0</_shield>
+      <_range>300</_range>
+      <_damage>10</_damage>
+      <_rate>5</_rate>
+      <_timer>0</_timer>
+      <_energyCost>0</_energyCost>
+      <_cost>0</_cost>
+      <_energyCost>0</_energyCost>
+
+      <_missileCount>1</_missileCount>
+      <_missileSpeed>30</_missileSpeed>
+      <_missileCost>0</_missileCost>
+    </Attributes>
+  </Entity>
+
+  <!-- Ship Units -->
+  
+  <Entity>
+    <TypeId>9</TypeId>
+    <Name>Ship</Name>
+    <Description>A moving unit type entity.</Description>
+    <Attributes>
+      <_totalHealth>100</_totalHealth>
+      <_currentHealth>100</_currentHealth>
+      <_shield>0</_shield>
+      <_range>100</_range>
+      <_damage>10</_damage>
+      <_rate>1</_rate>
+      <_timer>0</_timer>
+      <_cost>0</_cost>
+
+      <_speed>3</_speed>
+    </Attributes>
+  </Entity>
+
+  <Entity>
+    <TypeId>10</TypeId>
+    <Name>Fighter</Name>
+    <Description>A mid speed, mid hp attack vessel.</Description>
+    <Attributes>
+      <_totalHealth>100</_totalHealth>
+      <_currentHealth>100</_currentHealth>
+      <_shield>0</_shield>
+      <_range>100</_range>
+      <_damage>10</_damage>
+      <_rate>1</_rate>
+      <_timer>0</_timer>
+      <_cost>0</_cost>
+
+      <_speed>3</_speed>
+    </Attributes>
+  </Entity>
+
+  <Entity>
+    <TypeId>11</TypeId>
+    <Name>Swarmer</Name>
+    <Description>A fast moving, low hp attack vessel</Description>
+    <Attributes>
+      <_totalHealth>80</_totalHealth>
+      <_currentHealth>80</_currentHealth>
+      <_shield>0</_shield>
+      <_range>90</_range>
+      <_damage>10</_damage>
+      <_rate>1</_rate>
+      <_timer>0</_timer>
+      <_cost>0</_cost>
+
+      <_speed>5</_speed>
+    </Attributes>
+  </Entity>
+
+  <Entity>
+    <TypeId>12</TypeId>
+    <Name>Mothership</Name>
+    <Description>A slow moving, high hp, long range attack vessel that is capable is deploying smaller attack vessels similar to swarmers.</Description>
+    <Attributes>
+      <_totalHealth>300</_totalHealth>
+      <_currentHealth>300</_currentHealth>
+      <_shield>0</_shield>
+      <_range>300</_range>
+      <_damage>10</_damage>
+      <_rate>5</_rate>
+      <_timer>0</_timer>
+      <_cost>0</_cost>
+
+      <_speed>1</_speed>
+    </Attributes>
+  </Entity>
+
+  <!-- Other Entities -->
+
+  <Entity>
+    <TypeId>13</TypeId>
+    <Name>Asteroid</Name>
+    <Description>A mineral rich space rock.</Description>
+    <Attributes>
+      <_totalMinerals>500</_totalMinerals>
+      <_currentMinerals>500</_currentMinerals>
+    </Attributes>
+  </Entity>
+  
+  <Entity>
+    <TypeId>14</TypeId>
     <Name>Portal</Name>
     <Description>A portal to travel between zones.</Description>
     <Attriubutes>
-      <Destination>0</Destination>
+      <DestZone>0</DestZone>
     </Attriubutes>
+    <Properties>
+      <DestPosition>0,0</DestPosition>
+    </Properties>
   </Entity>
+  
 </XnaContent>

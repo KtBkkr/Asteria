@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using AsteriaWorldServer.PlayerCache;
-using AsteriaLibrary.Zones;
+using AsteriaWorldServer.Zones;
 
 namespace AsteriaWorldServer
 {
@@ -16,6 +16,7 @@ namespace AsteriaWorldServer
         public string Css;
         public ZoneManager ZoneManager;
         public GameProcessor GameProcessor;
+        public ChatProcessor ChatProcessor;
         public DalProvider Dal;
         public MasterPlayerTable Mpt;
         public Dictionary<string, string> ServerConfig;

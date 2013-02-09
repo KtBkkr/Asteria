@@ -70,7 +70,6 @@ namespace AsteriaLibrary.Messages
         S2C_LogoutDenied,               // Answer to C2S_XXXLogoutRequest, player remains in game.
 
         S2C_ZoneMessage,
-        S2C_EventMessage,
         S2C_ChatMessage,
         #endregion
 
